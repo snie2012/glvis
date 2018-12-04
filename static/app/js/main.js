@@ -16,7 +16,8 @@ d3.json('/embeddings').then(function(d){
     let svg = d3.select("body")
         .append("svg")
         .attr("width", w)
-        .attr("height", h);
+        .attr("height", h)
+        .style('border', 'solid 1px red');
 
     scatterplot(d.embeddings, svg, w, h, padding);
 })

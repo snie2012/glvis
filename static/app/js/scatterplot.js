@@ -37,7 +37,8 @@ function draw(dataset, svg, w, h, padding) {
             return h - yScale(d[1]);
         })
         .attr("r", 1)
-        .attr("fill", "gray");
+        .attr("fill", "lightgray")
+        .style("stroke", 'gray');
 
     //x axis
     let gX = svg.append("g")
