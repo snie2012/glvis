@@ -1,0 +1,19 @@
+{
+  "name": "glvis",
+  "version": "1.0.0",
+  "description": "Global and local exploration of deep neural network representations with domain context",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/snie2012/glvis.git"
+  },
+  "author": "Shaoliang Nie",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/snie2012/glvis/issues"
+  },
+  "homepage": "https://github.com/snie2012/glvis#readme"
+}
