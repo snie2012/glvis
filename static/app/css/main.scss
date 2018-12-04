@@ -1,0 +1,66 @@
+@import '~bootstrap/scss/bootstrap.scss';
+// @import '~bootstrap-select/dist/css/bootstrap-select.css';
+
+body {
+	margin-left: 10px;
+	overflow-x: hidden;
+}
+
+#input-div {
+}
+
+#second-input-row {
+	padding-top: 10px;
+}
+
+#gates {
+	padding-top: 10px;
+}
+
+#draw-area {
+	padding-top: 158px;
+	display: flex;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+#heatmap-area, #axis-area {
+	overflow: visible;
+}
+
+#line-area {
+	overflow-x: auto;
+}
+
+
+.cell-tip, .text-tip
+{
+	line-height: 1;
+	font-weight: bold;
+	padding: 12px;
+	background: rgba(0, 0, 0, 0.8);
+	color: #fff;
+	border-radius: 2px;
+}
+
+.text-tip > :first-child {
+	color: #ff0000;
+}
+
+.bar {
+	fill: #888;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #D4D8DA;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+.x path {
+	display: none;
+}
+
+
+// WEBPACK FOOTER //
+// ./app/css/app/css/main.scss

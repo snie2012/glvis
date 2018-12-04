@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 const path = require('path');
-let ExtractTextPlugin = require("extract-text-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const config = {
 	context: path.join(__dirname, './'),
@@ -28,23 +28,18 @@ const config = {
 			},
 
 			{
-				test: /\.(css)$/, 
-				use: ExtractTextPlugin.extract({
-					fallback: "style-loader",
-					use: "css-loader"
-				})
-			},
-
-			{
 				test: /\.scss$/,
-				use: ExtractTextPlugin.extract({
-					fallback: 'style-loader',
-					//resolve-url-loader may be chained before sass-loader if necessary
-					use: [
-						{loader: 'css-loader', options: {sourceMap: true}},
-						{loader: 'sass-loader', options: {sourceMap: true}}
-					]
-				})
+				use: [
+					MiniCssExtractPlugin.loader,
+					{
+						loader: "css-loader", 
+						options: {sourceMap: true}
+					}, 
+					{
+						loader: "sass-loader", 
+						options: {sourceMap: true}
+					}
+				]
 			},
 
 			{
@@ -59,25 +54,22 @@ const config = {
 
 	resolve : {
 		alias: {
-			// "jquery-ui": "jquery-ui-dist/jquery-ui.min.js",
-			// "jquery-ui-css": "jquery-ui-dist/jquery-ui.min.css",
+			"jquery-ui": "jquery-ui-dist/jquery-ui.min.js",
+			"jquery-ui-css": "jquery-ui-dist/jquery-ui.min.css",
 			
 			modules: path.join(__dirname, "node_modules"),
 		}
 	},
 
 	plugins: [
-		new ExtractTextPlugin("style.css"),
+		new MiniCssExtractPlugin({
+			filename: "style.css",
+			chunkFilename: "style_bundle.css"
+		}),
 
 		new webpack.ProvidePlugin({
 			'd3': 'd3',
-			'window.d3': 'd3',
-			// $: 'jquery',
-			// jQuery: 'jquery',
-			// 'window.jQuery': 'jquery',
-			// tether: 'tether',
-			// Tether: 'tether',
-			// 'window.Tether': 'tether'
+			'window.d3': 'd3'
 		})
 	]
 };

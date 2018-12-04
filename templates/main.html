@@ -3,84 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='build/style.css') }}">
+	 <link rel="stylesheet" type="text/css" href="/static/build/style.css">
 </head>
 <body>
-	<div id='header' class="navbar fixed-top navbar-light bg-faded">
-		<div id='input-div' class="row">
-			<div class="input-group col-2">
-			  <span class="input-group-addon">Input</span>
-			  <input type="text" id='input_word' class="form-control">
-			</div>
-			<div class="input-group col-2">
-			  <span class="input-group-addon">Gate</span>
-			  <input type="text" id='gate_val' class="form-control">
-			</div>
-			<div class="input-group col-2">
-			  <span class="input-group-addon">Layer</span>
-			  <input type="text" id='layer_id' class="form-control">
-			</div>
-			<div class="input-group col-3">
-			  <span class="input-group-addon">Sentence Length</span>
-			  <input type="text" id='max_length' class="form-control">
-			</div>
-		</div>
-
-		<div id='second-input-row' class="row">
-			<div class="input-group col-2">
-			  <span class="input-group-addon">Probabilistic</span>
-			  <input type="text" id='probabilistic' class="form-control">
-			</div>
-			<div class="input-group col-2">
-			  <span class="input-group-addon">Cluster Number</span>
-			  <input type="text" id='cluster_num' class="form-control">
-			</div>
-			<div class="input-group col-3">
-			  <span class="input-group-addon">Cluster Algorithm</span>
-			  <input type="text" id='algorithm' class="form-control">
-			</div>
-			<div class="input-group col-1">
-		      <span class="input-group-btn">
-		        <button id='go' class="btn btn-outline-primary" type="button">Cluster</button>
-		      </span>
-		    </div>
-		</div>
-
-		<div id="gates" class="btn-group" data-toggle="buttons">
-			<label id='f' layer='0' class="btn btn-secondary">
-				<input type="radio" layer='0' name="options" id="f" autocomplete="off" checked> forget 0
-			</label>
-			<label id='u' layer='0' class="btn btn-secondary">
-				<input type="radio" layer='0' name="options" id="u" autocomplete="off"> update 0
-			</label>
-			<label id='o' layer='0' class="btn btn-secondary">
-				<input type="radio" layer='0' name="options" id="o" autocomplete="off"> output 0
-			</label>
-			<label id='f' layer='1' class="btn btn-secondary">
-				<input type="radio" layer='1' name="options" id="f" autocomplete="off" checked> forget 1
-			</label>
-			<label id='u' layer='1' class="btn btn-secondary">
-				<input type="radio" layer='1' name="options" id="u" autocomplete="off"> update 1
-			</label>
-			<label id='o' layer='1' class="btn btn-secondary">
-				<input type="radio" layer='1' name="options" id="o" autocomplete="off"> output 1
-			</label>
-
-			<label id='hs' layer='0' class="btn btn-secondary">
-				<input type="radio" layer='0' name="options" id="hs" autocomplete="off"> hidden state 0
-			</label>
-			<label id='hs' layer='1' class="btn btn-secondary">
-				<input type="radio" layer='1' name="options" id="hs" autocomplete="off"> hidden state 1
-			</label>
-
-		</div>
-	</div>
-
-	<div id='draw-area'>
-		<div id='heatmap-area'></div>
-		<div id='axis-area'></div>
-		<div id='line-area'></div>
-	</div>
 </body>
-<script src="{{ url_for('static', filename='build/app.bundle.js') }}" charset="utf-8"></script>
+<script src="/static/build/app.bundle.js" charset="utf-8"></script>
 </html>
