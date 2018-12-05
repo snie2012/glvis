@@ -3,8 +3,8 @@ import numpy as np
 import random
 from sklearn.manifold import TSNE
 
-def get_sample_vectors(sample_size=1000):
-    model = gensim.models.KeyedVectors.load_word2vec_format('data/GoogleNews-vectors-negative300.bin', binary=True)
+def get_sample_vectors(sample_size=1000, data_path='data/GoogleNews-vectors-negative300.bin'):
+    model = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=True)
 
     vocab = list(model.vocab.keys())
 
@@ -14,4 +14,4 @@ def get_sample_vectors(sample_size=1000):
 
     embedded_vectors = TSNE(n_components=2).fit_transform(np.array(sample_vectors))
 
-    return sample_words, embedded_vectors.tolist()
+    return sample_words, embedded_vectors.tolist(), model

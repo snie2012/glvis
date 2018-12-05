@@ -9,13 +9,29 @@ app = Flask(__name__)
 
 from word_embeddings import get_sample_vectors
 
-sample_words, embeddings = get_sample_vectors(sample_size=5000)
+sample_words, embeddings, model = get_sample_vectors(sample_size=5000)
 
 @app.route('/embeddings')
 def serve_embeddings():
 	return jsonify(
         sample_words=sample_words,
         embeddings=embeddings
+    )
+
+@app.route('/neighbors', methods=['POST'])
+def serve_neighbors():
+    response = request.json
+    word = response['word']
+    print(word)
+
+    neighbors = [t[0] for t in model.most_similar(word)]
+    print(neighbors)
+    vectors = [model.get_vector(w).tolist() for w in neighbors]
+    print(vectors)
+
+    return jsonify(
+        neighbors=neighbors,
+        vectors=vectors
     )
 
 @app.route('/')

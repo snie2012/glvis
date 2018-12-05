@@ -1,6 +1,7 @@
-const webpack = require("webpack");
+// const webpack = require("webpack");
 const path = require('path');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const config = {
 	context: path.join(__dirname, './'),
@@ -10,8 +11,7 @@ const config = {
 	watch: true,
 
 	entry: {
-		app: './app/js/main.js',
-		css: './app/css/main.scss',
+		app: './app/js/main.js'
 	},
 
 	output: {
@@ -28,13 +28,13 @@ const config = {
 			},
 
 			{
-				test: /\.scss$/,
+				test: /\.(css|scss)$/,
 				use: [
 					MiniCssExtractPlugin.loader,
 					{
 						loader: "css-loader", 
 						options: {sourceMap: true}
-					}, 
+					},
 					{
 						loader: "sass-loader", 
 						options: {sourceMap: true}
@@ -62,16 +62,37 @@ const config = {
 	},
 
 	plugins: [
-		new MiniCssExtractPlugin({
-			filename: "style.css",
-			chunkFilename: "style_bundle.css"
+
+		new HtmlWebpackPlugin({
+			title: 'Custom template',
+			// Load a custom template (lodash by default)
+			template: '../templates/template.html',
+			filename: '../../templates/main.html'
 		}),
 
-		new webpack.ProvidePlugin({
-			'd3': 'd3',
-			'window.d3': 'd3'
-		})
-	]
+		new MiniCssExtractPlugin({
+			filename: "style.css"
+			// chunkFilename: "[id].css"
+		}),
+
+		// new webpack.ProvidePlugin({
+		// 	'd3': 'd3',
+		// 	'window.d3': 'd3'
+		// })
+	],
+
+	optimization: {
+		splitChunks: {
+			cacheGroups: {
+				styles: {
+					name: 'styles',
+					test: /\.(css|scss)$/,
+					chunks: 'all',
+					enforce: true
+				}
+		  	}
+		}
+	}
 };
 
 
