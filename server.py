@@ -5,39 +5,45 @@ import sys
 
 import numpy as np
 
+import gensim
+
 import json
 from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 
 from word_embeddings import get_sample_vectors
 
-sample_words, embeddings, model = get_sample_vectors(sample_size=5000)
+data_path='data/GoogleNews-vectors-negative300.bin'
+model = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=True)
+vocab = list(model.vocab.keys())
 
-@app.route('/embeddings')
+@app.route('/embeddings', methods=['POST'])
 def serve_embeddings():
-	return jsonify(
+    response = request.json
+    print(response)
+    sample_words, embeddings = get_sample_vectors(model, vocab, sample_size=int(response['sample_size']))
+    return jsonify(
         sample_words=sample_words,
-        embeddings=embeddings
+        embeddings=embeddings.tolist()
     )
 
 @app.route('/neighbors', methods=['POST'])
 def serve_neighbors():
     response = request.json
+    print(response)
     word = response['word']
-    print(word)
 
     neighbors = [t[0] for t in model.most_similar(word)]
     vectors = [model.get_vector(w).tolist() for w in neighbors]
 
     mean = np.mean(vectors, axis=0)
     std = np.std(vectors, axis=0)
-    line_data = np.stack((np.arange(len(mean)), std-np.min(std)), axis=1)
     
     return jsonify(
         neighbors=neighbors,
         vectors=vectors,
-        mean=mean.tolist(),
-        line_data=line_data.tolist()
+        mean=np.stack((np.arange(len(mean)), mean), axis=1).tolist(),
+        std=np.stack((np.arange(len(mean)), std-np.min(std)), axis=1).tolist()
     )
 
 @app.route('/')

@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-function draw(dataset, svg, w, h, padding) {
+function draw(data, svg, w, h, padding) {
     const zoom = d3.zoom()
         .scaleExtent([1, 40])
         .translateExtent([[-100, -100], [w, h]])
@@ -9,14 +9,14 @@ function draw(dataset, svg, w, h, padding) {
     //scale function
     var xScale = d3.scaleLinear()
         .domain([
-            d3.min(dataset, function(d) { return d[0]; }) - 5, 
-            d3.max(dataset, function(d) { return d[0]; })])
+            d3.min(data, function(d) { return d[0]; }) - 5, 
+            d3.max(data, function(d) { return d[0]; })])
         .range([padding, w - padding * 2]);
 
     var yScale = d3.scaleLinear()
         .domain([
-            d3.min(dataset, function(d) { return d[1]; }) - 5, 
-            d3.max(dataset, function(d) { return d[1]; })])
+            d3.min(data, function(d) { return d[1]; }) - 5, 
+            d3.max(data, function(d) { return d[1]; })])
         .range([h - padding, padding]);
 
     var xAxis = d3.axisBottom().scale(xScale).ticks(10);
@@ -27,7 +27,7 @@ function draw(dataset, svg, w, h, padding) {
                 .attr('height', [h-padding, padding]);
             
     group.selectAll("circle")
-        .data(dataset)
+        .data(data)
         .enter()
         .append("circle")
         .attr("cx", function(d) {
