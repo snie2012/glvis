@@ -13,7 +13,7 @@ import {draw as drawArea} from "./area";
 window.d3 = d3;
 
 //load data
-postJson('/embeddings', {sample_size: 2000}).then(data => {
+postJson('/embeddings', {sample_size: 100000}).then(data => {
     console.log(data);
 
     const w = 800;
