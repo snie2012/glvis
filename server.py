@@ -3,6 +3,8 @@ import sys
 # sys.path.append('../languagernn/language_model/')
 # sys.path.append('../languagernn/language_model/transparent_rnn/')
 
+import numpy as np
+
 import json
 from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
@@ -25,13 +27,17 @@ def serve_neighbors():
     print(word)
 
     neighbors = [t[0] for t in model.most_similar(word)]
-    print(neighbors)
     vectors = [model.get_vector(w).tolist() for w in neighbors]
-    print(vectors)
 
+    mean = np.mean(vectors, axis=0)
+    std = np.std(vectors, axis=0)
+    line_data = np.stack((np.arange(len(mean)), std-np.min(std)), axis=1)
+    
     return jsonify(
         neighbors=neighbors,
-        vectors=vectors
+        vectors=vectors,
+        mean=mean.tolist(),
+        line_data=line_data.tolist()
     )
 
 @app.route('/')
