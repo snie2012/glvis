@@ -36,9 +36,10 @@ function draw(data, svg, w, h, padding) {
         .attr("cy", function(d) {
             return h - yScale(d[1]);
         })
-        .attr("r", 1)
+        .attr("r", 2)
         .attr("fill", "lightgray")
-        .style("stroke", 'gray');
+        .style("stroke", 'black')
+        .attr("stroke-width", 0.5);
 
     //x axis
     let gX = svg.append("g")

@@ -13,10 +13,10 @@ import {draw as drawArea} from "./area";
 window.d3 = d3;
 
 //load data
-postJson('/embeddings', {sample_size: 1000}).then(data => {
+postJson('/embeddings', {sample_size: 2000}).then(data => {
     console.log(data);
 
-    const w = 1500;
+    const w = 800;
     const h = 500;
     const padding = 40;
     let svg = d3.select("body")
