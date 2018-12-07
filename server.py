@@ -4,6 +4,7 @@ import sys
 # sys.path.append('../languagernn/language_model/transparent_rnn/')
 
 import numpy as np
+import pandas as pd
 
 import gensim
 
@@ -36,14 +37,15 @@ def serve_neighbors():
     neighbors = [t[0] for t in model.most_similar(word)]
     vectors = [model.get_vector(w).tolist() for w in neighbors]
 
-    mean = np.mean(vectors, axis=0)
-    std = np.std(vectors, axis=0)
-    
+    stats = pd.DataFrame(columns=['dim', 'mean', 'std'])
+    stats['mean'] = np.mean(vectors, axis=0)
+    stats['std'] = np.std(vectors, axis=0)
+    stats['dim'] = np.arange(len(stats['mean']))
+
     return jsonify(
         neighbors=neighbors,
         vectors=vectors,
-        mean=np.stack((np.arange(len(mean)), mean), axis=1).tolist(),
-        std=np.stack((np.arange(len(mean)), std-np.min(std)), axis=1).tolist()
+        stats=stats.to_dict(orient='records')
     )
 
 @app.route('/')

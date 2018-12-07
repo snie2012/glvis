@@ -2,11 +2,11 @@ import * as d3 from "d3";
 
 function draw(group, data, w, h, margin) {
     let xScale = d3.scaleLinear()
-        .domain(d3.extent(data, d => d[0]))
+        .domain(d3.extent(data, d => d['dim']))
         .range([margin.left, w - margin.right]);
-
+ 
     let yScale = d3.scaleLinear()
-        .domain(d3.extent(data, d => d[1])).nice()
+        .domain(d3.extent(data, d => d['std']))
         .range([h - margin.bottom, margin.top]);
 
     let xAxis = g => g
@@ -19,9 +19,9 @@ function draw(group, data, w, h, margin) {
         .call(g => g.select(".domain").remove());
 
     let area = d3.area()
-        .x(d => xScale(d[0]))
-        .y0(d => yScale(0))
-        .y1(d => yScale(d[1]));
+        .x((d, i) => xScale(i))
+        .y0(d => yScale(d3.min(data, d => d['std'])))
+        .y1(d => yScale(d['std']));
 
     group.append("path")
         .datum(data)
