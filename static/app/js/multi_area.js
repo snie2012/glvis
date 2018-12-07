@@ -1,6 +1,10 @@
 import * as d3 from "d3";
 
-function draw(group, data, w, h, margin) {
+import {draw as parcoords} from "./parallel_cooridinates";
+
+function draw(group, data, plContainer, plData, w, h, margin) {
+    var w =w, h = h;
+
     let xScale = d3.scaleLinear()
         .domain(d3.extent(data, d => d['dim']))
         .range([margin.left, w - margin.right]);
@@ -55,6 +59,7 @@ function draw(group, data, w, h, margin) {
         .attr('d', stdArea)
         // .attr('stroke', 'black')
         // .attr('stroke-width', 0.5)
+        .attr('fill-opacity', 0.5)
         .attr('fill', 'steelblue');
     
     group.append("g")
@@ -65,6 +70,50 @@ function draw(group, data, w, h, margin) {
 
     group.append("g")
         .call(yStdAxis);
+
+    
+    // Add brush event
+    let brush = d3.brushX()
+        .extent([[margin.left, margin.top], [w - margin.right, h - margin.bottom]])
+        .on("brush end", brushed);
+    
+    group.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+    var plDiv = null;
+
+    function brushed() {
+        // if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+        
+        // x.domain(s.map(x2.invert, x2));
+        // focus.select(".area").attr("d", area);
+        // focus.select(".axis--x").call(xAxis);
+        // svg.select(".zoom").call(zoom.transform, d3.zoomIdentity
+        //     .scale(width / (s[1] - s[0]))
+        //     .translate(-s[0], 0));
+        if (plDiv) plDiv.remove();
+        plDiv = plContainer.append("div")
+            .attr('class', 'parcoords')
+            .attr('id', 'pl')
+            .style("width", w + 'px')
+            .style("height", (h) + 'px');
+
+        // prepare data for parallel coordinates
+        let s = d3.event.selection;
+        if (!s) return;
+
+        const range = s.map(xScale.invert, xScale);
+        let visibleData = [];
+        for (let i = Math.ceil(range[0]); i <= Math.floor(range[1]); i++) {
+            const dim = data[i].dim;
+            visibleData.push(plData[dim]);
+        }
+
+        // console.log(visibleData);
+        
+        parcoords(d3.transpose(visibleData), '#pl');
+    }
 }
 
 export {draw};

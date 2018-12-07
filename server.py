@@ -33,8 +33,9 @@ def serve_neighbors():
     response = request.json
     print(response)
     word = response['word']
+    topn = int(response['topn'])
 
-    neighbors = [t[0] for t in model.most_similar(word)]
+    neighbors = [t[0] for t in model.most_similar(word, topn=topn)]
     vectors = [model.get_vector(w).tolist() for w in neighbors]
 
     stats = pd.DataFrame(columns=['dim', 'mean', 'std'])
@@ -44,7 +45,7 @@ def serve_neighbors():
 
     return jsonify(
         neighbors=neighbors,
-        vectors=vectors,
+        vectors=np.transpose(vectors).tolist(),
         stats=stats.to_dict(orient='records')
     )
 
