@@ -34,6 +34,7 @@ function draw(group, w, h, margin) {
     
     function dragended(d) {
         // d3.select(this).classed("active", false);
+        console.log(d3.event.y);
     }
 }
 

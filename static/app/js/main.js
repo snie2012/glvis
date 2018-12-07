@@ -8,7 +8,7 @@ import {draw as scatterplot} from "./scatterplot";
 import {draw as parcoords} from "./parallel_cooridinates";
 import {draw as drawFilterLine} from "./filter_line";
 import {draw as drawArea} from "./area";
-import {draw as drawMulAreas} from "./multi_area";
+import {MultiAreaPlot} from "./multi_area";
 
 window.d3 = d3;
 
@@ -62,7 +62,7 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
         
         const margin = ({top: 20, right: 30, bottom: 30, left: 30});
 
-        drawMulAreas(areaGroup, data.stats, plContainer, data.vectors, w, h, margin);
+        let mulAreaPlot = new MultiAreaPlot(areaGroup, data.stats, plContainer, data.vectors, w, h, margin);
 
         // Draw filter lines
         drawFilterLine(areaGroup, w, h, margin);
