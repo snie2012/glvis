@@ -35,7 +35,7 @@ class MultiAreaPlot {
         // Axes
         this.xAxis = g => g
             .attr("transform", `translate(0,${h - margin.bottom})`)
-            .call(d3.axisBottom(this.xScale).ticks(w/20));
+            .call(d3.axisBottom(this.xScale).ticks(data.length, '.0f'));
 
         this.yMeanAxis = g => g
             .attr("transform", `translate(${margin.left},0)`)

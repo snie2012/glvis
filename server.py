@@ -14,8 +14,9 @@ app = Flask(__name__)
 
 from word_embeddings import get_sample_vectors
 
-data_path='data/GoogleNews-vectors-negative300.bin'
-model = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=True)
+# data_path='data/GoogleNews-vectors-negative300.bin'
+data_path = 'data/glove.6B/glove.6B.50d.txt.word2vec'
+model = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=False)
 vocab = list(model.vocab.keys())
 
 @app.route('/embeddings', methods=['POST'])
