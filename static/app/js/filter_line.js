@@ -1,41 +1,62 @@
 import * as d3 from "d3";
 
-function draw(group, w, h, margin) {
-    let line = group.append("line")
-        .attr('x1', margin.left)
-        .attr('x2', w - margin.right)
-        .attr('y1', h / 2)
-        .attr('y2', h / 2)
-        .attr('fill', 'none')
-        .attr('stroke', 'red');
-    
-    let circle = group.append('circle')
-        .attr('cx', w - margin.right)
-        .attr('cy', h / 2)
-        .attr('r', 10)
-        .style('fill', 'white')
-        .style('stroke', 'green')
-        .style('stroke-width', 4)
-        // bind dragging behavior
-        .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
-    
-    
-    function dragstarted(d) {
-        // d3.select(this).raise().classed("active", true);
+class FilterLine {
+    constructor(group, w, h, margin, knobPos, color, height, dataAttr, mulAreaPlot) {
+        this.group = group;
+        this.w = w;
+        this.h = h;
+        this.margin = margin;
+        this.knobPos = knobPos;
+        this.color = color;
+        this.height = height;
+        this.dataAttr = dataAttr;
+        this.mulAreaPlot = mulAreaPlot;
+
+        this.line = group.append("line")
+            .attr('x1', margin.left)
+            .attr('x2', w - margin.right)
+            .attr('y1', height)
+            .attr('y2', height)
+            .attr('fill', 'none')
+            .attr('stroke', color);
+        
+        this.circle = group.append('circle')
+            .attr('cx', () => this.knobPos == 'left' ? margin.left : w - margin.right)
+            .attr('cy', height)
+            .attr('r', 10)
+            .style('fill', 'white')
+            .style('stroke', 'green')
+            .style('stroke-width', 4)
+            // bind dragging behavior
+            .call(d3.drag()
+                .on("start", this._dragstarted.bind(this))
+                .on("drag", this._dragged.bind(this))
+                .on("end", this._dragended.bind(this)));
     }
-    
-    function dragged(d) {
-        d3.select(this).attr("cy", d3.event.y);
-        line.attr('y1', d3.event.y).attr('y2', d3.event.y);
+
+    _dragstarted(d) {}
+
+    _dragged(d) {
+        this.circle.attr("cy", d3.event.y);
+        this.line.attr('y1', d3.event.y).attr('y2', d3.event.y);
     }
-    
-    function dragended(d) {
-        // d3.select(this).classed("active", false);
-        console.log(d3.event.y);
+
+    _dragended(d) {
+        let threshold = this.dataAttr == 'mean' ?  this.mulAreaPlot.yMeanScale.invert(d3.event.y) : this.mulAreaPlot.yStdScale.invert(d3.event.y);
+
+        this.threshold = threshold;
+        console.log(this.dataAttr + ' threshold: ', threshold);
+
+        const filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
+
+        let visibleData = [];
+        for (let dim of filterDims) {
+            visibleData.push(this.mulAreaPlot.parcoords.data[dim]);
+        }
+
+        this.mulAreaPlot.parcoords.draw(d3.transpose(visibleData));
     }
 }
 
-export {draw};
+
+export {FilterLine};

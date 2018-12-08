@@ -1,26 +1,24 @@
 import * as d3 from "d3";
 
-import {draw as parcoords} from "./parallel_cooridinates";
 
 class MultiAreaPlot {
-    constructor (group, data, plContainer, plData, w, h, margin) {
+    constructor (group, data, w, h, margin, parcoords) {
         this.group = group;
         this.data = data;
-        this.plContainer = plContainer;
-        this.plData = plData;
         this.w = w;
         this.h = h;
         this.margin = margin;
+        
+        this.parcoords = parcoords;
 
         this.plDiv = null;
 
-        this.setup();
-        this.draw();
-        this.bindBrush();
+        this.setup(data, w, h, margin);
+        this.draw(group, data);
+        this.bindBrush(group, w, h, margin);
     }
 
-    setup() {
-        let data = this.data, margin = this.margin, w = this.w, h = this.h;
+    setup(data, w, h, margin) {
         // Scales
         this.xScale = d3.scaleLinear()
             .domain(d3.extent(data, d => d['dim']))
@@ -50,15 +48,15 @@ class MultiAreaPlot {
             .call(g => g.select(".domain").remove());
     }
 
-    draw() {
+    draw(group, data) {
         // draw mean
         let meanArea = d3.area()
             .x((d, i) => this.xScale(i))
-            .y0(d => this.yMeanScale(d3.min(this.data, d => d['mean'])))
+            .y0(d => this.yMeanScale(d3.min(data, d => d['mean'])))
             .y1(d => this.yMeanScale(d['mean']));
 
-        this.group.append("path")
-            .datum(this.data)
+        group.append("path")
+            .datum(data)
             .attr('d', meanArea)
             // .attr('stroke', 'red')
             .attr('fill', 'lightgray');
@@ -66,10 +64,10 @@ class MultiAreaPlot {
         // draw std
         let stdArea = d3.area()
             .x((d, i) => this.xScale(i))
-            .y0(d => this.yStdScale(d3.min(this.data, d => d['std'])))
+            .y0(d => this.yStdScale(d3.min(data, d => d['std'])))
             .y1(d => this.yStdScale(d['std']));
 
-        this.group.append("path")
+        group.append("path")
             .datum(this.data)
             .attr('d', stdArea)
             // .attr('stroke', 'black')
@@ -77,50 +75,45 @@ class MultiAreaPlot {
             .attr('fill-opacity', 0.5)
             .attr('fill', 'steelblue');
         
-        this.group.append("g")
+        group.append("g")
             .call(this.xAxis);
         
-        this.group.append("g")
+        group.append("g")
             .call(this.yMeanAxis);
 
-        this.group.append("g")
+        group.append("g")
             .call(this.yStdAxis);
     }
 
-    bindBrush() {
+    bindBrush(group, w, h, margin) {
         // Add brush event
-        let margin = this.margin, w = this.w, h = this.h;
         let brush = d3.brushX()
             .extent([[margin.left, margin.top], [w - margin.right, h - margin.bottom]])
             .on("brush end", this.brushed.bind(this));
 
-        this.group.append("g")
+        group.append("g")
             .attr("class", "brush")
             .call(brush);
     }
 
     brushed() {
-        if (this.plDiv) this.plDiv.remove();
-        this.plDiv = this.plContainer.append("div")
-            .attr('class', 'parcoords')
-            .attr('id', 'pl')
-            .style("width", this.w + 'px')
-            .style("height", this.h + 'px');
-
         // prepare data for parallel coordinates
         let s = d3.event.selection;
         if (!s) return;
 
         const range = s.map(this.xScale.invert, this.xScale);
+        this.selectedRange = range;
+        if (Math.floor(range[1] - Math.ceil(range[0]) < 1)) return;
+
         let visibleData = [];
         for (let i = Math.ceil(range[0]); i <= Math.floor(range[1]); i++) {
             const dim = this.data[i].dim;
-            visibleData.push(this.plData[dim]);
+            visibleData.push(this.parcoords.data[dim]);
         }
 
         // console.log(visibleData);
-        
-        parcoords(d3.transpose(visibleData), '#pl');
+
+        this.parcoords.draw(d3.transpose(visibleData));
     }
 }
 
