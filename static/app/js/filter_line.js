@@ -47,11 +47,14 @@ class FilterLine {
         this.threshold = threshold;
         console.log(this.dataAttr + ' threshold: ', threshold);
 
-        const filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
-        this.filterDims = filterDims;
+        if (this.dataAttr == 'mean') {
+            this.filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
+        } else {
+            this.filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] < threshold).map(d => d.dim);
+        }
 
         let visibleData = [];
-        for (let dim of filterDims) {
+        for (let dim of this.filterDims) {
             visibleData.push(this.mulAreaPlot.parcoords.data[dim]);
         }
 

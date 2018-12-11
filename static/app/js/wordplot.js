@@ -52,7 +52,8 @@ class WordPlot {
             .attr("x", d => this.xScale(d.x))
             .attr("y", d => h - this.yScale(d.y))
             .text(d => d.word)
-            .attr("font", "bold 30px sans-serif")
+            .style("font-family", "sans-serif")
+            .style("font-size", 15);
     
         //X axis
         this.gX = svg.append("g")
@@ -86,6 +87,14 @@ class WordPlot {
         this.svg.transition()
             .duration(750)
             .call(this.zoom.transform, d3.zoomIdentity);
+    }
+
+    filter(wordSet) {
+        let selected = this.elms.filter(d => wordSet.has(d.word));
+        let unselected = this.elms.filter(d => !wordSet.has(d.word));
+        
+        selected.style("opacity", 1.0);
+        unselected.style("opacity", 0.1);
     }
 
 

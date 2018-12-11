@@ -1,3 +1,5 @@
+// https://github.com/syntagmatic/parallel-coordinates
+
 import 'parcoord-es/dist/parcoords.css';
 import ParCoords from 'parcoord-es';
 
@@ -26,6 +28,7 @@ class ParallelCoords {
             .color("#d6616b")
             .alpha(0.5)
             .composite('darker')
+            .hideAxis(['id'])
             // .dimensions({
             //     '0': {
             //         domain: [-10, 10]
@@ -42,7 +45,8 @@ class ParallelCoords {
             .brushMode("1D-axes")
             .on('brush', d => {
                 const selected = d.map((e) => e.id);
-                console.log(selected.map((id) => this.wordplot.words[id]));
+                const wordSet = new Set(selected.map((id) => this.wordplot.words[id]));
+                this.wordplot.filter(wordSet);
             });
     }
 }

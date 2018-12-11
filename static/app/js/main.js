@@ -13,10 +13,10 @@ import {WordPlot} from "./wordplot";
 window.d3 = d3;
 
 //load data
-postJson('/embeddings', {sample_size: 100}).then(data => {
+postJson('/embeddings', {sample_size: 200}).then(data => {
     console.log(data);
 
-    const w = 800;
+    const w = 750;
     const h = 500;
     const padding = 40;
     let svg = d3.select("#scatterplot")
@@ -26,6 +26,7 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
         .style('border', 'solid 1px red');
     
     let globalView = new GlobalScatterPlot(data.embeddings, svg, w, h, padding);
+
 }).then(() => {
     postJson('/neighbors', {word: 'science',topn: 150}).then(data => {
         console.log(data);
@@ -36,10 +37,10 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
         // Set word plot
         let wordSvg = d3.select("#wordplot")
             .append("svg")
-            .attr("width", 700)
+            .attr("width", 750)
             .attr("height", 500)
             .style('border', 'solid 1px red');
-        let wordPlot = new WordPlot(data.neighbors, d3.transpose(data.vectors), wordSvg, 700, 500, 40);
+        let wordPlot = new WordPlot(data.neighbors, d3.transpose(data.vectors), wordSvg, 750, 500, 40);
         
         // Set plot size
         const w = 1500;
