@@ -48,13 +48,15 @@ class FilterLine {
         console.log(this.dataAttr + ' threshold: ', threshold);
 
         const filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
+        this.filterDims = filterDims;
 
         let visibleData = [];
         for (let dim of filterDims) {
             visibleData.push(this.mulAreaPlot.parcoords.data[dim]);
         }
 
-        this.mulAreaPlot.parcoords.draw(d3.transpose(visibleData));
+        const plData = d3.transpose(visibleData).map((d, i) => {d['id'] = i; return d;});
+        this.mulAreaPlot.parcoords.draw(plData);
     }
 }
 

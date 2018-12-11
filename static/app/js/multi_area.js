@@ -112,8 +112,9 @@ class MultiAreaPlot {
         }
 
         // console.log(visibleData);
-
-        this.parcoords.draw(d3.transpose(visibleData));
+        
+        const plData = d3.transpose(visibleData).map((d, i) => {d['id'] = i; return d;});
+        this.parcoords.draw(plData);
     }
 }
 

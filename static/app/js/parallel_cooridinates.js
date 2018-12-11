@@ -2,11 +2,12 @@ import 'parcoord-es/dist/parcoords.css';
 import ParCoords from 'parcoord-es';
 
 class ParallelCoords {
-    constructor(container, data, w, h) {
+    constructor(container, data, w, h, wordplot) {
         this.container = container;
         this.data = data;
         this.w = w;
         this.h = h;
+        this.wordplot = wordplot;
 
         this.div = null;
     }
@@ -38,7 +39,12 @@ class ParallelCoords {
             .render()
             .shadows()
             .reorderable()
-            .brushMode("1D-axes");
+            .brushMode("1D-axes")
+            .on('brush', (d)=> {
+                const selected = d.map((e) => e.id);
+                console.log(selected);
+                console.log(selected.map((id) => this.wordplot.words[id]));
+            });
     }
 }
 

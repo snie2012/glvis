@@ -10,6 +10,7 @@ import {draw as drawArea} from "./area";
 import {ParallelCoords} from "./parallel_cooridinates";
 import {FilterLine} from "./filter_line";
 import {MultiAreaPlot} from "./multi_area";
+import {WordPlot} from "./wordplot";
 
 window.d3 = d3;
 
@@ -20,7 +21,7 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
     const w = 800;
     const h = 500;
     const padding = 40;
-    // let svg = d3.select("body")
+    // let svg = d3.select("#scatterplot")
     //     .append("svg")
     //     .attr("width", w)
     //     .attr("height", h)
@@ -31,25 +32,28 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
     postJson('/neighbors', {word: 'heaven',topn: 150}).then(data => {
         console.log(data);
 
-        // sort data
+        // Sort data
         data.stats.sort((a, b) => a.std - b.std);
 
-        // set plot size
+        // Set plot size
         const w = 1500;
         const h = 180;
 
-        // set the div dimensions for parallel coordinates
+        // Set word plot
+        let wordPlot = new WordPlot(data.neighbors);
+
+        // Set the div dimensions for parallel coordinates
         let plContainer = d3.select("#pl-container")
             .style("width", w + 'px')
             .style("height", (h) + 'px');
         
-        let parcoords = new ParallelCoords(plContainer, data.vectors, w, h);
+        let parcoords = new ParallelCoords(plContainer, data.vectors, w, h, wordPlot);
 
-        // draw area charts
-        let areaSvg = d3.select("body")
+        // Draw area charts
+        let areaSvg = d3.select("#areaplot")
             .append("svg")
             .attr("width", w)
-            .attr("height", 2 * h);
+            .attr("height", h);
         
         let areaGroup = areaSvg.append('g')
             .attr('width', w)
