@@ -3,58 +3,17 @@
 
 body {
 	margin-left: 10px;
-	overflow-x: hidden;
 }
 
-#pl {
-    width: 10000px;
-    height: 300px;
+#scatterplot {
+	
 }
 
-#input-div {
-}
-
-#second-input-row {
-	padding-top: 10px;
-}
-
-#gates {
-	padding-top: 10px;
-}
-
-#draw-area {
-	padding-top: 158px;
-	display: flex;
-	overflow-x: hidden;
-	overflow-y: auto;
-}
-
-#heatmap-area, #axis-area {
-	overflow: visible;
-}
-
-#line-area {
-	overflow-x: auto;
+#wordplot {
+	
 }
 
 
-.cell-tip, .text-tip
-{
-	line-height: 1;
-	font-weight: bold;
-	padding: 12px;
-	background: rgba(0, 0, 0, 0.8);
-	color: #fff;
-	border-radius: 2px;
-}
-
-.text-tip > :first-child {
-	color: #ff0000;
-}
-
-.bar {
-	fill: #888;
-}
 .axis path,
 .axis line {
   fill: none;

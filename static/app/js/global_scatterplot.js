@@ -1,41 +1,20 @@
 import * as d3 from "d3";
-import {postJson} from "./util";
 
-class WordPlot {
-    constructor(words, vectors, svg, w, h, padding) {
-        this.words = words;
-        this.vectors = vectors;
+class GlobalScatterPlot {
+    constructor(data, svg, w, h, padding) {
+        this.data = data;
         this.svg = svg;
         this.w = w;
         this.h = h;
         this.padding = padding;
 
-        postJson("/tsne", {'vectors': vectors}).then(data => {
-            console.log(data);
-            this.prepareData(this.words, data.coords);
-            this.setup(this.drawData, svg, w, h, padding);
-        })
-    }
-
-    prepareData(words, coords) {
-        this.drawData = words.map((d, i) => {
-            return {
-                word: d,
-                x: coords[i][0],
-                y: coords[i][1]
-            };
-        })
-        console.log(this.drawData);
-    }
-
-    setup(data, svg, w, h, padding) {
         //Set scales
         this.xScale = d3.scaleLinear()
-            .domain(d3.extent(data, d => d.x))
+            .domain((d3.extent(data, d => d[0])))
             .range([padding, w - padding * 2]);
 
         this.yScale = d3.scaleLinear()
-            .domain(d3.extent(data, d => d.y))
+            .domain((d3.extent(data, d => d[1])))
             .range([h - padding, padding]);
 
         this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10);
@@ -45,15 +24,17 @@ class WordPlot {
                 .attr('width', [padding, w - padding * 2])
                 .attr('height', [h-padding, padding]);
 
-        this.elms = this.group.selectAll("text")
+        this.group.selectAll("circle")
             .data(data)
             .enter()
-            .append("text")
-            .attr("x", d => this.xScale(d.x))
-            .attr("y", d => h - this.yScale(d.y))
-            .text(d => d.word)
-            .attr("font", "bold 30px sans-serif")
-    
+            .append("circle")
+            .attr("cx", d => this.xScale(d[0]))
+            .attr("cy", d => h - this.yScale(d[1]))
+            .attr("r", 2)
+            .attr("fill", "lightgray")
+            .style("stroke", 'black')
+            .attr("stroke-width", 0.5);
+
         //X axis
         this.gX = svg.append("g")
             .attr("class", "x axis")	
@@ -73,7 +54,6 @@ class WordPlot {
             .on("zoom", this.zoomed.bind(this)); 
     
         svg.call(this.zoom);
-
     }
 
     zoomed() {
@@ -87,8 +67,9 @@ class WordPlot {
             .duration(750)
             .call(this.zoom.transform, d3.zoomIdentity);
     }
-
-
 }
 
-export {WordPlot};
+
+export {GlobalScatterPlot};
+
+// https://bl.ocks.org/mbostock/db6b4335bf1662b413e7968910104f0f

@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from sklearn.manifold import TSNE
 
 import gensim
 
@@ -48,6 +49,16 @@ def serve_neighbors():
         neighbors=neighbors,
         vectors=np.transpose(vectors).tolist(),
         stats=stats.to_dict(orient='records')
+    )
+
+@app.route('/tsne', methods=['POST'])
+def serve_tsne():
+    response = request.json
+    vectors = response['vectors']
+    coords = TSNE(n_components=2).fit_transform(np.array(vectors))
+
+    return jsonify(
+        coords=coords.tolist()
     )
 
 @app.route('/')

@@ -40,9 +40,8 @@ class ParallelCoords {
             .shadows()
             .reorderable()
             .brushMode("1D-axes")
-            .on('brush', (d)=> {
+            .on('brush', d => {
                 const selected = d.map((e) => e.id);
-                console.log(selected);
                 console.log(selected.map((id) => this.wordplot.words[id]));
             });
     }

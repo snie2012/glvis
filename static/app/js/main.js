@@ -4,9 +4,7 @@ import * as d3 from "d3";
 
 import {postJson} from "./util";
 
-import {draw as scatterplot} from "./scatterplot";
-import {draw as drawArea} from "./area";
-
+import {GlobalScatterPlot} from "./global_scatterplot";
 import {ParallelCoords} from "./parallel_cooridinates";
 import {FilterLine} from "./filter_line";
 import {MultiAreaPlot} from "./multi_area";
@@ -21,26 +19,31 @@ postJson('/embeddings', {sample_size: 100}).then(data => {
     const w = 800;
     const h = 500;
     const padding = 40;
-    // let svg = d3.select("#scatterplot")
-    //     .append("svg")
-    //     .attr("width", w)
-    //     .attr("height", h)
-    //     .style('border', 'solid 1px red');
-
-    // scatterplot(data.embeddings, svg, w, h, padding);
+    let svg = d3.select("#scatterplot")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h)
+        .style('border', 'solid 1px red');
+    
+    let globalView = new GlobalScatterPlot(data.embeddings, svg, w, h, padding);
 }).then(() => {
-    postJson('/neighbors', {word: 'heaven',topn: 150}).then(data => {
+    postJson('/neighbors', {word: 'science',topn: 150}).then(data => {
         console.log(data);
 
         // Sort data
         data.stats.sort((a, b) => a.std - b.std);
 
+        // Set word plot
+        let wordSvg = d3.select("#wordplot")
+            .append("svg")
+            .attr("width", 700)
+            .attr("height", 500)
+            .style('border', 'solid 1px red');
+        let wordPlot = new WordPlot(data.neighbors, d3.transpose(data.vectors), wordSvg, 700, 500, 40);
+        
         // Set plot size
         const w = 1500;
         const h = 180;
-
-        // Set word plot
-        let wordPlot = new WordPlot(data.neighbors);
 
         // Set the div dimensions for parallel coordinates
         let plContainer = d3.select("#pl-container")
