@@ -113,7 +113,11 @@ class MultiAreaPlot {
 
         // console.log(visibleData);
         
-        const plData = d3.transpose(visibleData).map((d, i) => {d['id'] = i; return d;});
+        const plData = d3.transpose(visibleData).map((d, i) => {
+            d['id'] = i; 
+            d['word'] = this.parcoords.wordplot.words[i];
+            return d;
+        });
         this.parcoords.draw(plData);
     }
 }

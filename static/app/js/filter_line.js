@@ -50,7 +50,7 @@ class FilterLine {
         if (this.dataAttr == 'mean') {
             this.filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
         } else {
-            this.filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] < threshold).map(d => d.dim);
+            this.filterDims = this.mulAreaPlot.data.filter(d => d[this.dataAttr] > threshold).map(d => d.dim);
         }
 
         let visibleData = [];
@@ -58,7 +58,11 @@ class FilterLine {
             visibleData.push(this.mulAreaPlot.parcoords.data[dim]);
         }
 
-        const plData = d3.transpose(visibleData).map((d, i) => {d['id'] = i; return d;});
+        const plData = d3.transpose(visibleData).map((d, i) => {
+            d['id'] = i; 
+            d['word'] = this.mulAreaPlot.parcoords.wordplot.words[i];
+            return d;
+        });
         this.mulAreaPlot.parcoords.draw(plData);
     }
 }

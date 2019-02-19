@@ -28,7 +28,7 @@ class ParallelCoords {
             .color("#d6616b")
             .alpha(0.5)
             .composite('darker')
-            .hideAxis(['id'])
+            .hideAxis(['id', 'word'])
             // .dimensions({
             //     '0': {
             //         domain: [-10, 10]
@@ -39,6 +39,9 @@ class ParallelCoords {
             // })
             // .createAxes()
             // .reorderable()
+            .color(function(d){
+                return d['word'].endsWith('ly') ? '#ef8a62' : '#999999';
+            })
             .render()
             .shadows()
             .reorderable()

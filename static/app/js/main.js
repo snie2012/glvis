@@ -14,21 +14,22 @@ window.d3 = d3;
 
 //load data
 postJson('/embeddings', {sample_size: 200}).then(data => {
-    console.log(data);
+    // console.log(data);
 
-    const w = 750;
-    const h = 500;
-    const padding = 40;
-    let svg = d3.select("#scatterplot")
-        .append("svg")
-        .attr("width", w)
-        .attr("height", h)
-        .style('border', 'solid 1px red');
+    // const w = 750;
+    // const h = 500;
+    // const padding = 40;
+    // let svg = d3.select("#scatterplot")
+    //     .append("svg")
+    //     .attr("width", w)
+    //     .attr("height", h)
+    //     .style('border', 'solid 1px red');
     
-    let globalView = new GlobalScatterPlot(data.embeddings, svg, w, h, padding);
+    // let globalView = new GlobalScatterPlot(data.embeddings, svg, w, h, padding);
 
 }).then(() => {
-    postJson('/neighbors', {word: 'science',topn: 150}).then(data => {
+    // postJson('/neighbors', {word: 'science',topn: 150}).then(data => {
+    postJson('/subset', {size: 500}).then(data => {
         console.log(data);
 
         // Sort data
@@ -40,7 +41,7 @@ postJson('/embeddings', {sample_size: 200}).then(data => {
             .attr("width", 750)
             .attr("height", 500)
             .style('border', 'solid 1px red');
-        let wordPlot = new WordPlot(data.neighbors, d3.transpose(data.vectors), wordSvg, 750, 500, 40);
+        let wordPlot = new WordPlot(data.subset, d3.transpose(data.vectors), wordSvg, 750, 500, 40);
         
         // Set plot size
         const w = 1500;
