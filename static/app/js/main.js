@@ -15,7 +15,7 @@ import {WordCloud} from "./word_cloud";
 window.d3 = d3;
 
 // Retrive subset data from a specified endpoint, then visualize the data
-postJson('/query_db', {term: 'best ever'}).then(data => {
+postJson('/query_db', {term: 'worst ever'}).then(data => {
     console.log(data);
 
     // Sort data
