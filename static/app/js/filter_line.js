@@ -60,7 +60,7 @@ class FilterLine {
 
         const plData = d3.transpose(visibleData).map((d, i) => {
             d['id'] = i; 
-            d['word'] = this.mulAreaPlot.parcoords.wordplot.words[i];
+            // d['word'] = this.mulAreaPlot.parcoords.wordplot.words[i];
             return d;
         });
         this.mulAreaPlot.parcoords.draw(plData);

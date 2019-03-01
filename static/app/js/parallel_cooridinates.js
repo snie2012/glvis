@@ -4,12 +4,12 @@ import 'parcoord-es/dist/parcoords.css';
 import ParCoords from 'parcoord-es';
 
 class ParallelCoords {
-    constructor(container, data, w, h, wordplot) {
+    constructor(container, data, w, h, wordcloud) {
         this.container = container;
         this.data = data;
         this.w = w;
         this.h = h;
-        this.wordplot = wordplot;
+        this.wordcloud = wordcloud;
 
         this.div = null;
     }
@@ -40,16 +40,18 @@ class ParallelCoords {
             // .createAxes()
             // .reorderable()
             .color(function(d){
-                return d['word'].endsWith('ly') ? '#ef8a62' : '#999999';
+                // return d['word'].endsWith('ly') ? '#ef8a62' : '#999999';
             })
+            .ticks(1)
             .render()
             .shadows()
             .reorderable()
             .brushMode("1D-axes")
             .on('brush', d => {
-                const selected = d.map((e) => e.id);
-                const wordSet = new Set(selected.map((id) => this.wordplot.words[id]));
-                this.wordplot.filter(wordSet);
+                const selectedIds = d.map((e) => e.id);
+                // const wordSet = new Set(selected.map((id) => this.wordplot.words[id]));
+                // this.wordplot.filter(wordSet);
+                this.wordcloud.setData(selectedIds);
             });
     }
 }

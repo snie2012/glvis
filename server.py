@@ -13,12 +13,16 @@ import gensim
 
 import json
 from flask import Flask, jsonify, render_template, request
-app = Flask(__name__)
 
 from models.word_embeddings import get_sample_vectors
+from db_utils import query
+from clean_text import clean_text
+
+
+app = Flask(__name__)
 
 # data_path='data/GoogleNews-vectors-negative300.bin'
-data_path = 'data/glove.6B/glove.6B.50d.txt.word2vec'
+data_path = 'models/data/glove.6B/glove.6B.50d.txt.word2vec'
 model = gensim.models.KeyedVectors.load_word2vec_format(data_path, binary=False)
 vocab = list(model.vocab.keys())
 
@@ -56,15 +60,20 @@ def serve_neighbors():
     neighbors = [t[0] for t in model.most_similar(word, topn=topn)]
     vectors = [model.get_vector(w).tolist() for w in neighbors]
 
-    stats = pd.DataFrame(columns=['dim', 'mean', 'std'])
-    stats['mean'] = np.mean(vectors, axis=0)
-    stats['std'] = np.std(vectors, axis=0)
-    stats['dim'] = np.arange(len(stats['mean']))
+    mean = np.mean(vectors, axis=0)
+    std = np.mean(vectors, axis=0)
+    stats = [
+        {
+            'dim': i,
+            'mean': val[0],
+            'std': val[1]
+        } for i, val in enumerate(zip(mean, std))
+    ]
 
     return jsonify(
         subset=neighbors,
         vectors=np.transpose(vectors).tolist(),
-        stats=stats.to_dict(orient='records')
+        stats=stats
     )
 
 @app.route('/subset', methods=['POST'])
@@ -76,15 +85,20 @@ def serve_subsets():
     vocab_subset = get_sample_subset(size=size)
     vectors = [model.get_vector(w).tolist() for w in vocab_subset]
 
-    stats = pd.DataFrame(columns=['dim', 'mean', 'std'])
-    stats['mean'] = np.mean(vectors, axis=0)
-    stats['std'] = np.std(vectors, axis=0)
-    stats['dim'] = np.arange(len(stats['mean']))
+    mean = np.mean(vectors, axis=0)
+    std = np.mean(vectors, axis=0)
+    stats = [
+        {
+            'dim': i,
+            'mean': val[0],
+            'std': val[1]
+        } for i, val in enumerate(zip(mean, std))
+    ]
 
     return jsonify(
         subset=vocab_subset,
         vectors=np.transpose(vectors).tolist(),
-        stats=stats.to_dict(orient='records')
+        stats=stats
     )
 
 
@@ -97,6 +111,35 @@ def serve_tsne():
     return jsonify(
         coords=coords.tolist()
     )
+
+# Endpoint that takes query from front end and send back matched results for the query
+@app.route('/query_db', methods=['POST'])
+def serve_db_query():
+    term = request.json['term']
+    query_res = query(term)
+    vectors = [elm['val'] for elm in query_res]
+
+    # Clean the sentences and retrieve words for each sentence
+    words = [clean_text(elm['sentence']) for elm in query_res]
+
+    # Calculate the statistics for each dimension
+    mean = np.mean(vectors, axis=0)
+    std = np.mean(vectors, axis=0)
+    stats = [
+        {
+            'dim': i,
+            'mean': val[0],
+            'std': val[1]
+        } for i, val in enumerate(zip(mean, std))
+    ]
+
+    return jsonify(
+        subset=[elm['sentence'] for elm in query_res],
+        vectors=np.transpose(vectors).tolist(),
+        stats=stats,
+        words=words
+    )
+
 
 @app.route('/')
 def index():

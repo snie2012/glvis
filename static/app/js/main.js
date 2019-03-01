@@ -9,70 +9,57 @@ import {ParallelCoords} from "./parallel_cooridinates";
 import {FilterLine} from "./filter_line";
 import {MultiAreaPlot} from "./multi_area";
 import {WordPlot} from "./wordplot";
+import {WordCloud} from "./word_cloud";
 
+// Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
 
-//load data
-postJson('/embeddings', {sample_size: 200}).then(data => {
-    // console.log(data);
+// Retrive subset data from a specified endpoint, then visualize the data
+postJson('/query_db', {term: 'best ever'}).then(data => {
+    console.log(data);
 
-    // const w = 750;
-    // const h = 500;
-    // const padding = 40;
-    // let svg = d3.select("#scatterplot")
-    //     .append("svg")
-    //     .attr("width", w)
-    //     .attr("height", h)
-    //     .style('border', 'solid 1px red');
+    // Sort data
+    data.stats.sort((a, b) => a.mean - b.mean);
+
+    // Set word plot
+    let wordSvg = d3.select("#wordplot")
+        .append("svg")
+        .attr("width", 750)
+        .attr("height", 500)
+        .style('border', 'solid 1px red');
+    // let wordPlot = new WordPlot(data.subset, d3.transpose(data.vectors), wordSvg, 750, 500, 40);
+
+    let wordCloud = new WordCloud(data.words, wordSvg, 30);
     
-    // let globalView = new GlobalScatterPlot(data.embeddings, svg, w, h, padding);
+    // Set plot size
+    const w = 1500;
+    const h = 180;
 
-}).then(() => {
-    // postJson('/neighbors', {word: 'science',topn: 150}).then(data => {
-    postJson('/subset', {size: 500}).then(data => {
-        console.log(data);
+    // Set the div dimensions for parallel coordinates
+    let plContainer = d3.select("#pl-container")
+        .style("width", w + 'px')
+        .style("height", (h) + 'px');
+    
+    let parcoords = new ParallelCoords(plContainer, data.vectors, w, h, wordCloud);
 
-        // Sort data
-        data.stats.sort((a, b) => a.std - b.std);
+    // Draw area charts
+    let areaSvg = d3.select("#areaplot")
+        .append("svg")
+        .attr("width", w)
+        .attr("height", h);
+    
+    let areaGroup = areaSvg.append('g')
+        .attr('width', w)
+        .attr('height', h);
+        // .style('border', 'solid 1px red');
+    
+    const margin = ({top: 20, right: 30, bottom: 30, left: 30});
 
-        // Set word plot
-        let wordSvg = d3.select("#wordplot")
-            .append("svg")
-            .attr("width", 750)
-            .attr("height", 500)
-            .style('border', 'solid 1px red');
-        let wordPlot = new WordPlot(data.subset, d3.transpose(data.vectors), wordSvg, 750, 500, 40);
-        
-        // Set plot size
-        const w = 1500;
-        const h = 180;
+    let mulAreaPlot = new MultiAreaPlot(areaGroup, data.stats, w, h, margin, parcoords);
 
-        // Set the div dimensions for parallel coordinates
-        let plContainer = d3.select("#pl-container")
-            .style("width", w + 'px')
-            .style("height", (h) + 'px');
-        
-        let parcoords = new ParallelCoords(plContainer, data.vectors, w, h, wordPlot);
-
-        // Draw area charts
-        let areaSvg = d3.select("#areaplot")
-            .append("svg")
-            .attr("width", w)
-            .attr("height", h);
-        
-        let areaGroup = areaSvg.append('g')
-            .attr('width', w)
-            .attr('height', h);
-            // .style('border', 'solid 1px red');
-        
-        const margin = ({top: 20, right: 30, bottom: 30, left: 30});
-
-        let mulAreaPlot = new MultiAreaPlot(areaGroup, data.stats, w, h, margin, parcoords);
-
-        // Draw std filter line
-        let stdFilterLine = new FilterLine(areaGroup, w, h, margin, 'right', 'red', h / 2, 'std', mulAreaPlot);
-        
-        // Draw mean filter line
-        let meanFilterLine = new FilterLine(areaGroup, w, h, margin, 'left', 'green', h / 2.5, 'mean',  mulAreaPlot);
-    });
-});
+    // Draw std filter line
+    let stdFilterLine = new FilterLine(areaGroup, w, h, margin, 'right', 'red', h / 2, 'std', mulAreaPlot);
+    
+    // Draw mean filter line
+    let meanFilterLine = new FilterLine(areaGroup, w, h, margin, 'left', 'green', h / 2.5, 'mean',  mulAreaPlot);
+})
