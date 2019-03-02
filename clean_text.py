@@ -2,21 +2,27 @@ import re
 import string
 from nltk.corpus import stopwords
 
-def clean_text(sentence):
+def remove_tags(sentence):
     # Remove HTML tags
     tags = re.compile('<.*?>')
-    removed = re.sub(tags, '', sentence)
+    return re.sub(tags, '', sentence)
 
+def remove_digits(sentence):
     # Remove digits
     digits = re.compile('\d+')
-    removed = re.sub(digits, '', removed)
+    return re.sub(digits, '', sentence)
 
+def remove_punctuations(sentence):
     # Remove punctuations
     translator = str.maketrans('', '', string.punctuation)
-    translated = removed.translate(translator)
+    return sentence.translate(translator)
+
+def clean_text(sentence):
+    # Remove HTML tags, digits and punctuations
+    sentence = remove_punctuations(remove_digits(remove_tags(sentence)))
 
     # Turn string to lower case and split into words
-    wordlist = translated.strip().lower().split(' ')
+    wordlist = sentence.strip().lower().split(' ')
 
     # Remove stop words
     # and words that do not make sense in the specific application domain

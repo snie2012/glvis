@@ -16,7 +16,7 @@ from flask import Flask, jsonify, render_template, request
 
 from models.word_embeddings import get_sample_vectors
 from db_utils import query
-from clean_text import clean_text
+from clean_text import clean_text, remove_tags
 
 
 app = Flask(__name__)
@@ -116,7 +116,12 @@ def serve_tsne():
 @app.route('/query_db', methods=['POST'])
 def serve_db_query():
     term = request.json['term']
+    print('Query term: ', term)
+
     query_res = query(term)
+    print('Number of results: ', len(query_res))
+    if len(query_res) == 0: return ('', 204)
+
     vectors = [elm['val'] for elm in query_res]
 
     # Clean the sentences and retrieve words for each sentence
@@ -124,7 +129,8 @@ def serve_db_query():
 
     # Calculate the statistics for each dimension
     mean = np.mean(vectors, axis=0)
-    std = np.mean(vectors, axis=0)
+    std = np.std(vectors, axis=0)
+    print('Stats shape. Mean: {}, variance: {}'.format(mean.shape, std.shape))
     stats = [
         {
             'dim': i,
@@ -134,7 +140,7 @@ def serve_db_query():
     ]
 
     return jsonify(
-        subset=[elm['sentence'] for elm in query_res],
+        subset=[remove_tags(elm['sentence']) for elm in query_res],
         vectors=np.transpose(vectors).tolist(),
         stats=stats,
         words=words
