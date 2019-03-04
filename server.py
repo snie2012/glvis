@@ -140,10 +140,14 @@ def serve_db_query():
     ]
 
     return jsonify(
-        subset=[remove_tags(elm['sentence']) for elm in query_res],
+        sentences=[remove_tags(elm['sentence']) for elm in query_res],
         vectors=np.transpose(vectors).tolist(),
         stats=stats,
-        words=words
+        words=words,
+        sentiments=[{
+            'sentiment': elm['sentiment'],
+            'confidence': elm['confidence'],
+            } for elm in query_res]
     )
 
 

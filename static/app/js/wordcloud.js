@@ -2,13 +2,13 @@ import * as cloud from "d3-cloud";
 import * as _ from "lodash";
 
 class WordCloud {
-    constructor(words_matrix, svg, padding) {
+    constructor(words_matrix, svg, width, height, padding) {
         this.svg = svg;
         this.padding = padding;
         this.words_matrix = words_matrix;
 
         this.layout = cloud()
-            .size([500, 500])
+            .size([width, height])
             .padding(3)
             .font("Impact")
             .fontSize(function(d) { return d.size; })

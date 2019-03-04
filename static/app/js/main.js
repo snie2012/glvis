@@ -19,6 +19,11 @@ d3.select('#subset-area')
     .style('height', window.innerHeight * 0.9 + 'px')
     .style('overflow-y', 'scroll');
 
+// Set height for the domain area to support overflow scroll
+d3.select('#domain-area')
+    .style('height', window.innerHeight * 0.9 + 'px')
+    .style('overflow-y', 'scroll');
+
 // Bind query event
 d3.select('#query-button').on('click', () => {
     const query_term = document.getElementById('query-input').value;
@@ -52,7 +57,7 @@ function subsetArea(term, data) {
     let termRow = subsetRow.append('div')
         .attr('class', 'row m-1 text-center')
         .style('width', subsetRow.node().parentElement.clientWidth * 0.8 + 'px')
-        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.subset.length + '</b>');
+        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
 
     // Create a row subsetRow to host histograms
     let histRow = subsetRow.append('div')
@@ -126,7 +131,7 @@ function dimensionArea(term, data) {
 
     infoRow
         .style('width', infoRow.node().parentElement.clientWidth * 0.8 + 'px')
-        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.subset.length + '</b>');
+        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
 
     // Draw d1-scatterplot for dimensions sorted by standard deviations
 
@@ -144,9 +149,14 @@ function dimensionArea(term, data) {
 
     // Create a row for each dimension
     // Inside a row, create a svg to draw 1D-scatterplot
-    const numOfDims = 50; // set number of dimensions to display
+    const numOfDims = 20; // set number of dimensions to display
     const width = infoRow.node().parentElement.clientWidth * 0.8, 
           height = 50; // width and height for svg
+    
+    // Create a wordcloud to be evoked in scatterplots events
+    let cloudSvg = d3.select('#domain-area').append('svg');
+    let wordCloud = new WordCloud(data.words, cloudSvg, 500, 500, 10);
+
     for (let i = 0; i < numOfDims; i++) {
         let dimRow = dimensionDrawArea.append('div')
             .attr('class', 'row m-1');
@@ -155,7 +165,7 @@ function dimensionArea(term, data) {
             .attr('width', width)
             .attr('height', height);
 
-        let dimScatterPlot = new Scatterplot1D(dimSvg, data.vectors[data.stats[i]['dim']], width, height, 'black');
+        let dimScatterPlot = new Scatterplot1D(dimSvg, data.vectors[data.stats[i]['dim']], data.sentiments, width, height, 'black', wordCloud);
     }
 }
 
@@ -163,9 +173,6 @@ function dimensionArea(term, data) {
 function query(endpoint, term) {
     postJson(endpoint, {term: term}).then(data => {
         console.log(data);
-
-        // Sort data
-        // data.stats.sort((a, b) => a.mean - b.mean);
 
         subsetArea(term, data);
     })
