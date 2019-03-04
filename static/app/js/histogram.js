@@ -8,7 +8,8 @@ class Histogram {
         const margin = ({top: 10, right: 20, bottom: 30, left: 30});
 
         let x = d3.scaleLinear()
-            .domain(d3.extent(data)).nice()
+            .domain(d3.extent(data))
+            .nice()
             .range([margin.left, width - margin.right]);
         
         this.bins = d3.histogram()
@@ -22,27 +23,14 @@ class Histogram {
 
         let xAxis = g => g
             .attr("transform", `translate(0,${height - margin.bottom})`)
-            .call(d3.axisBottom(x).tickSizeOuter(0))
-            .call(g => g.append("text")
-                .attr("x", width - margin.right)
-                .attr("y", -4)
-                .attr("fill", "#000")
-                .attr("font-weight", "bold")
-                .attr("text-anchor", "end")
-                .text(data.x));
+            .call(d3.axisBottom(x).tickSizeOuter(0));
 
         let yAxis = g => g
             .attr("transform", `translate(${margin.left},0)`)
             .call(d3.axisLeft(y))
-            .call(g => g.select(".domain").remove())
-            .call(g => g.select(".tick:last-of-type text").clone()
-                .attr("x", 4)
-                .attr("text-anchor", "start")
-                .attr("font-weight", "bold")
-                .text(data.y));
+            .call(g => g.select(".domain").remove());
 
-        this.g = svg.append("g")
-            .attr("fill", color);
+        this.g = svg.append("g").attr("fill", color);
 
         this.rects = this.g.selectAll("rect")
             .data(this.bins)
