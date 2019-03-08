@@ -1,2 +1,5 @@
 data/
 dask-worker-space/
+*.csv
+*.tsv
+*.png

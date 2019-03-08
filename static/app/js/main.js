@@ -136,7 +136,7 @@ function dimensionArea(term, data) {
     // Draw d1-scatterplot for dimensions sorted by standard deviations
 
     // Sort data based on standard deviations, from large to small
-    data.stats.sort((a, b) => a.std - b.std);
+    data.stats.sort((a, b) => b.std - a.std);
 
     // Clear dimension draw area if it already exists
     // Set height for the dimension area to support overflow scroll

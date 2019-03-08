@@ -18,7 +18,8 @@ class Scatterplot1D {
         this.g = svg.append("g")
             .attr('transform', `translate(0, ${height - 3 * margin.bottom})`);
         
-        let colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+        let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+        let schemeScale = d3.schemeCategory10;
         this.g.selectAll("circle")
             .data(data)
             .enter().append("circle")
@@ -26,8 +27,9 @@ class Scatterplot1D {
             .attr("cy", 5)
             .attr('r', 4)
             .style('stroke', (d, i) => {
-                const val = sentiments[i]['sentiment'] == 'POSITIVE' ? sentiments[i]['confidence'] : -sentiments[i]['confidence'];
-                return colorScale(val);
+                // const confidence = sentiments[i]['sentiment'] == 'POSITIVE' ? sentiments[i]['confidence'] : -sentiments[i]['confidence'];
+                const prediction = sentiments[i]['sentiment'] == 'POSITIVE' ? 0 : 3;
+                return schemeScale[prediction];
             })
             .style('fill', 'none');
         
