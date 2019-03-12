@@ -4,18 +4,13 @@ from pymongo import MongoClient
 client = MongoClient()
 
 # Specify which db to use
-db_name = 'glvis_db'
-db = client[db_name]
-
-# Specify which collection to use
-col_name = 'flattened'
-collection = db[col_name]
+db = client['glvis_db']
 
 # Define a function what takes a query and return the matched results from the database.
-def query(term):
+def query_sentiment_model(term, collection='flattened'):
     pipeline = {
         '$text': {'$search': '\"{}\"'.format(term)}
     }
 
-    return list(collection.find(pipeline))
+    return list(db[collection].find(pipeline))
 

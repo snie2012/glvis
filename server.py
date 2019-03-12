@@ -15,7 +15,7 @@ import json
 from flask import Flask, jsonify, render_template, request
 
 from models.word_embeddings import get_sample_vectors
-from db_utils import query
+from db_utils import query_sentiment_model
 from clean_text import clean_text, remove_tags
 
 
@@ -118,7 +118,7 @@ def serve_db_query():
     term = request.json['term']
     print('Query term: ', term)
 
-    query_res = query(term)
+    query_res = query_sentiment_model(term)
     print('Number of results: ', len(query_res))
     if len(query_res) == 0: return ('', 204)
 
