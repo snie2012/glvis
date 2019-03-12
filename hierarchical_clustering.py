@@ -5,6 +5,8 @@ Clustering will be performed on both rows and columns.
 
 from scipy.spatial.distance import pdist
 import scipy.cluster.hierarchy as hier
+import itertools
+import numpy as np
 
 
 def cluster_row_and_col(mat, dist_type='cosine', linkage_type='average', group_type='maxclust'):
@@ -42,11 +44,18 @@ def cluster_and_group(dist_mat, num_of_points, linkage_type='average', group_typ
     groups = {}
     if group_type == 'distance':
         for inst_dist in [float(i) / 10 for i in range(11)]:
-            inst_key = str(inst_dist).replace('.', '')
-            groups[inst_key] = hier.fcluster(Y, inst_dist * dist_mat.max(), 'distance')
-            groups[inst_key] = groups[inst_key][new_idx].tolist()
+            key = str(inst_dist).replace('.', '')
+            fc_num = hier.fcluster(Y, inst_dist * dist_mat.max(), 'distance')
+            fc_num = fc_num[new_idx] # Index fc_num according to the new order
+            count = np.array([len(list(g)) for k, g in itertools.groupby(fc_num)])
+            partial_sum = count.cumsum()
+            groups[key] = partial_sum
     elif group_type == 'maxclust':
-        for num_cluster in range(2, num_of_points):
-            groups[str(num_cluster)] = hier.fcluster(Y, num_cluster, criterion='maxclust')[new_idx].tolist()
+        for num_cluster in range(2, num_of_points // 2):
+            fc_num = hier.fcluster(Y, num_cluster, criterion='maxclust')
+            fc_num = fc_num[new_idx] # Index fc_num according to the new order
+            count = np.array([len(list(g)) for k, g in itertools.groupby(fc_num)])
+            partial_sum = count.cumsum()
+            groups[str(num_cluster)] = partial_sum
 
     return new_idx, groups
