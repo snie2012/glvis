@@ -11,17 +11,18 @@ class Scatterplot2D {
         //Set scales
         this.xScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d[0])))
-            .range([padding, w - padding * 2]);
+            .range([padding, w - padding]);
 
         this.yScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d[1])))
             .range([h - padding, padding]);
 
-        this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10);
-        this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
+        this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10).tickSizeOuter(0);
+        this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10).tickSizeOuter(0);
 
         this.group = svg.append('g')
-                .attr('width', [padding, w - padding * 2])
+                .attr('transform', `translate(${0}, ${0})`)
+                .attr('width', [padding, w - padding])
                 .attr('height', [h-padding, padding]);
 
         this.group.selectAll("circle")
@@ -48,12 +49,12 @@ class Scatterplot2D {
             .call(this.yAxis);
         
         // Bind zoom event
-        this.zoom = d3.zoom()
-            .scaleExtent([1, 40])
-            .translateExtent([[-100, -100], [w, h]])
-            .on("zoom", this.zoomed.bind(this)); 
+        // this.zoom = d3.zoom()
+        //     .scaleExtent([1, 40])
+        //     .translateExtent([[-100, -100], [w, h]])
+        //     .on("zoom", this.zoomed.bind(this)); 
     
-        svg.call(this.zoom);
+        // svg.call(this.zoom);
     }
 
     zoomed() {

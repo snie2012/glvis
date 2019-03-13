@@ -24,8 +24,9 @@ def prepare_heatmap_data(mat, cluster_results, num_of_rows=10, num_of_cols=10):
 
     heatmap_data = []
     for i in range(1, len(row_group)):
+        dt = []
         for j in range(1, len(col_group)):
-            heatmap_data.append({
+            dt.append({
                 'x': col_group[j-1],
                 'y': row_group[i-1],
                 'w': col_group[j] - col_group[j-1],
@@ -35,5 +36,6 @@ def prepare_heatmap_data(mat, cluster_results, num_of_rows=10, num_of_cols=10):
                 'instances': row_index[row_group[i-1]: row_group[i]],
                 'dimensions': col_index[col_group[j-1]: col_group[j]]
             })
+        heatmap_data.append(dt)
     
     return heatmap_data

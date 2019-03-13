@@ -121,40 +121,50 @@ function subsetArea(term, data) {
 
 
 // Designate the area to draw dimensions
-let dimensionDrawArea;
+let heatmapDrawArea;
+let scatterplotButton;
 
 // Tooltip for heatmap
 let tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean; });
 
 function dimensionArea(term, data) {
     // Show selected subset's information
-    let infoRow = d3.select('#selected-subset-info')
-        .attr('class', 'row m-1 text-center');
+    let infoRow = d3.select('#selected-subset-info');
 
-    infoRow
-        .style('width', infoRow.node().parentElement.clientWidth * 0.8 + 'px')
-        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
+    infoRow.html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
+
+    // Create scatterplotting button
+    if (scatterplotButton) scatterplotButton.remove();
+    scatterplotButton = d3.select('#button-area').append('button')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-primary')
+        .html('Scatterplotting');
 
     // Draw heatmap for the selected subset
 
     // Clear dimension draw area if it already exists
     // Set height for the dimension area to support overflow scroll
-    if (dimensionDrawArea) dimensionDrawArea.remove();
-    dimensionDrawArea = d3.select('#dimension-area')
+    if (heatmapDrawArea) heatmapDrawArea.remove();
+    heatmapDrawArea = d3.select('#heatmap-area')
         .append('div')
-        .attr('class', 'row')
-        .style('height', window.innerHeight * 0.5 + 'px')
-        .style('overflow-y', 'scroll');
+        .attr('class', 'row m-1')
+        .style('height', window.innerHeight * 0.4 + 'px');
 
     const width = infoRow.node().parentElement.clientWidth * 0.5, 
           height = 300; // width and height for svg
+    const padding = 20; // padding for group inside svg
 
-    let heatmapSvg = dimensionDrawArea.append('svg')
-                        .attr('width', width + 20)
-                        .attr('height', height + 20)
+    let heatmapSvg = heatmapDrawArea.append('svg')
+                        .attr('width', width + 50)
+                        .attr('height', height + 50)
                         .call(tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, data.request_identifier, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length, tip);
+    let heatmap = new HeatMap(data.heatmap_data, data.request_identifier, heatmapSvg, width, height, padding, data.vectors.length, data.vectors[0].length, tip);
+
+    // Bind click event to scatterplot button
+    scatterplotButton.on('click', () => {
+        heatmap.drawSelected();
+    })
 }
 
 // Retrive subset data from a specified endpoint, then visualize the data

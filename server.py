@@ -23,12 +23,32 @@ data_dict = {} # Dictionary to store all the calculated data for each subset req
 @app.route('/tsne', methods=['POST'])
 def serve_tsne():
     response = request.json
+
+    selection_model = response['selection_mode']
     data = data_dict[response['request_identifier']]
-    vectors = data.vectors[response['instances'], :]
-    vectors = vectors[:, response['dimensions']]
+
+    instances = response['instances']
+    dimensions = response['dimensions']
+
+    # Select and reorder data based on selection mode
+    if selection_model == 'Dimensions_Only':
+        dimensions = np.concatenate(response['dimensions'])
+        vectors = data.vectors[:, dimensions]
+    elif selection_model == 'Instances_Only':
+        instances = np.concatenate(response['instances'])
+        vectors = data.vectors[instances, :]
+    elif selection_model == 'Both_Instances_and_Dimensions':
+        instances = np.concatenate(response['instances'])
+        dimensions = np.concatenate(response['dimensions'])
+        vectors = data.vectors[instances, :]
+        vectors = vectors[:, dimensions]
+    elif selection_model == 'Cell_Selected':
+        vectors = data.vectors[instances, :]
+        vectors = vectors[:, dimensions]
+    else:
+        raise Exception()
 
     print('Perform TSNE on shape: ', vectors.shape)
-
     coords = TSNE(n_components=2).fit_transform(np.array(vectors))
 
     return jsonify(
@@ -77,7 +97,7 @@ def query_bert_mrpc():
     vectors = reorder(vectors, cluster_results['row']['new_idx'], cluster_results['col']['new_idx'])
 
     # 4
-    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=3, num_of_cols=3)
+    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=10, num_of_cols=10)
 
     # Set values for the data class
     bert_mrpc_data.size = size
