@@ -5,12 +5,8 @@ import d3_tip from "d3-tip";
 
 import {postJson} from "./util";
 
-import {ParallelCoords} from "./parallel_cooridinates";
-import {FilterLine} from "./filter_line";
-import {MultiAreaPlot} from "./multi_area";
 import {WordCloud} from "./wordcloud";
 import {Histogram} from "./histogram";
-import {Scatterplot1D} from './scatterplot1d';
 import {HeatMap} from './heatmap';
 
 // Expose d3 to the global scope (used for debugging)
@@ -147,7 +143,7 @@ function dimensionArea(term, data) {
     dimensionDrawArea = d3.select('#dimension-area')
         .append('div')
         .attr('class', 'row')
-        .style('height', window.innerHeight * 0.9 + 'px')
+        .style('height', window.innerHeight * 0.5 + 'px')
         .style('overflow-y', 'scroll');
 
     const width = infoRow.node().parentElement.clientWidth * 0.5, 
@@ -158,7 +154,7 @@ function dimensionArea(term, data) {
                         .attr('height', height + 20)
                         .call(tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length, tip);
+    let heatmap = new HeatMap(data.heatmap_data, data.request_identifier, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length, tip);
 }
 
 // Retrive subset data from a specified endpoint, then visualize the data

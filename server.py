@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.manifold import TSNE
+import itertools
 
 from flask import Flask, jsonify, render_template, request
 
@@ -16,17 +17,23 @@ from server_data import BertMrpcData
 
 app = Flask(__name__)
 
+counter = itertools.count() # Counter to keep track of each subset request
+data_dict = {} # Dictionary to store all the calculated data for each subset request
+
 @app.route('/tsne', methods=['POST'])
 def serve_tsne():
     response = request.json
-    vectors = response['vectors']
+    data = data_dict[response['request_identifier']]
+    vectors = data.vectors[response['instances'], :]
+    vectors = vectors[:, response['dimensions']]
+
+    print('Perform TSNE on shape: ', vectors.shape)
+
     coords = TSNE(n_components=2).fit_transform(np.array(vectors))
 
     return jsonify(
         coords=coords.tolist()
     )
-
-bert_mrpc_data = BertMrpcData()
 
 @app.route('/query_bert_mrpc', methods=['POST'])
 def query_bert_mrpc():
@@ -38,6 +45,8 @@ def query_bert_mrpc():
     4. Prepare drawing information/data to be used in the front end
     5. Send the data back to the front end
     '''
+    # Initiate data class
+    bert_mrpc_data = BertMrpcData()
 
     # 1
     size = int(request.json['size'])
@@ -77,7 +86,11 @@ def query_bert_mrpc():
     bert_mrpc_data.stats = stats
     bert_mrpc_data.heatmap_data = heatmap_data
 
+    request_identifier = str(next(counter))
+    data_dict[request_identifier] = bert_mrpc_data
+
     return jsonify(
+        request_identifier=request_identifier,
         sentences=sentences,
         vectors=vectors.tolist(),
         stats=stats,

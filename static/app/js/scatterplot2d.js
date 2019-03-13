@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 
-class GlobalScatterPlot {
+class Scatterplot2D {
     constructor(data, svg, w, h, padding) {
         this.data = data;
         this.svg = svg;
@@ -70,6 +70,6 @@ class GlobalScatterPlot {
 }
 
 
-export {GlobalScatterPlot};
+export {Scatterplot2D};
 
 // https://bl.ocks.org/mbostock/db6b4335bf1662b413e7968910104f0f
