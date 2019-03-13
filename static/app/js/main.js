@@ -10,6 +10,7 @@ import {MultiAreaPlot} from "./multi_area";
 import {WordCloud} from "./wordcloud";
 import {Histogram} from "./histogram";
 import {Scatterplot1D} from './scatterplot1d';
+import {HeatMap} from './heatmap';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
@@ -26,12 +27,12 @@ d3.select('#domain-area')
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
-    const query_term = document.getElementById('query-input').value;
-    if (!query_term) return;
-    console.log('Query term: ', query_term);
+    const sample_size = document.getElementById('query-input').value;
+    if (!sample_size) return;
+    console.log('Sample size: ', sample_size);
 
-    const endpoint = '/query_db';
-    query(endpoint, query_term);
+    const endpoint = '/query_bert_mrpc';
+    query(endpoint, sample_size);
 })
 
 // Designate the previously selected row
@@ -133,10 +134,7 @@ function dimensionArea(term, data) {
         .style('width', infoRow.node().parentElement.clientWidth * 0.8 + 'px')
         .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
 
-    // Draw d1-scatterplot for dimensions sorted by standard deviations
-
-    // Sort data based on standard deviations, from large to small
-    data.stats.sort((a, b) => b.std - a.std);
+    // Draw heatmap for the selected subset
 
     // Clear dimension draw area if it already exists
     // Set height for the dimension area to support overflow scroll
@@ -147,33 +145,21 @@ function dimensionArea(term, data) {
         .style('height', window.innerHeight * 0.9 + 'px')
         .style('overflow-y', 'scroll');
 
-    // Create a row for each dimension
-    // Inside a row, create a svg to draw 1D-scatterplot
-    const numOfDims = 20; // set number of dimensions to display
     const width = infoRow.node().parentElement.clientWidth * 0.8, 
-          height = 50; // width and height for svg
+        height = 50; // width and height for svg
+
+    let heatmapSvg = dimensionDrawArea.append('svg')
+                        .attr('width', width + 20)
+                        .attr('height', height + 20);
     
-    // Create a wordcloud to be evoked in scatterplots events
-    let cloudSvg = d3.select('#domain-area').append('svg');
-    let wordCloud = new WordCloud(data.words, cloudSvg, 500, 500, 10);
-
-    for (let i = 0; i < numOfDims; i++) {
-        let dimRow = dimensionDrawArea.append('div')
-            .attr('class', 'row m-1');
-
-        let dimSvg = dimRow.append('svg')
-            .attr('width', width)
-            .attr('height', height);
-
-        let dimScatterPlot = new Scatterplot1D(dimSvg, data.vectors[data.stats[i]['dim']], data.sentiments, width, height, 'black', wordCloud);
-    }
+    let heatmap = new HeatMap(data.heatmap_data, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length);
 }
 
 // Retrive subset data from a specified endpoint, then visualize the data
-function query(endpoint, term) {
-    postJson(endpoint, {term: term}).then(data => {
+function query(endpoint, size) {
+    postJson(endpoint, {'size': size}).then(data => {
         console.log(data);
 
-        subsetArea(term, data);
+        subsetArea(size, data);
     })
 }

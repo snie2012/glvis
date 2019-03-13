@@ -14,21 +14,18 @@ def prepare_heatmap_data(mat, cluster_results, num_of_rows=10, num_of_cols=10):
     col_index = cluster_results['col']['new_idx']
 
     # Reindex mat
-    print(mat)
     mat = reorder(mat, row_index, col_index)
-    print(mat)
 
     row_group = cluster_results['row']['groups'][str(num_of_rows)]
     col_group = cluster_results['col']['groups'][str(num_of_cols)]
 
-    row_group = np.insert(row_group, 0, 0)
-    col_group = np.insert(col_group, 0, 0)
+    row_group = np.insert(row_group, 0, 0).tolist()
+    col_group = np.insert(col_group, 0, 0).tolist()
 
     heatmap_data = []
     for i in range(1, len(row_group)):
-        td = []
         for j in range(1, len(col_group)):
-            td.append({
+            heatmap_data.append({
                 'x': col_group[j-1],
                 'y': row_group[i-1],
                 'w': col_group[j] - col_group[j-1],
@@ -38,7 +35,5 @@ def prepare_heatmap_data(mat, cluster_results, num_of_rows=10, num_of_cols=10):
                 'instances': row_index[row_group[i-1]: row_group[i]],
                 'dimensions': col_index[col_group[j-1]: col_group[j]]
             })
-
-        heatmap_data.append(td)
     
     return heatmap_data
