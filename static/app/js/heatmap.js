@@ -28,7 +28,10 @@ class HeatMap {
             .attr('height', d => d.h * unit_height)
             .style('fill', d => divergingScale(d.mean))
             .on('mouseover', tip.show)
-            .on('mouseout', tip.hide);
+            .on('mouseout', tip.hide)
+            .on('click', (d, i) => {
+                console.log(d, i);
+            });
 
     }
 }

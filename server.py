@@ -11,6 +11,8 @@ from hierarchical_clustering import cluster_row_and_col
 from reorder import reorder
 from prepare_draw_data import prepare_heatmap_data
 
+from server_data import BertMrpcData
+
 
 app = Flask(__name__)
 
@@ -24,6 +26,7 @@ def serve_tsne():
         coords=coords.tolist()
     )
 
+bert_mrpc_data = BertMrpcData()
 
 @app.route('/query_bert_mrpc', methods=['POST'])
 def query_bert_mrpc():
@@ -66,6 +69,13 @@ def query_bert_mrpc():
 
     # 4
     heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=3, num_of_cols=3)
+
+    # Set values for the data class
+    bert_mrpc_data.size = size
+    bert_mrpc_data.sentences = sentences
+    bert_mrpc_data.vectors = vectors
+    bert_mrpc_data.stats = stats
+    bert_mrpc_data.heatmap_data = heatmap_data
 
     return jsonify(
         sentences=sentences,
