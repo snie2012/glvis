@@ -2,9 +2,10 @@ import * as d3 from 'd3';
 
 
 class HeatMap {
-    constructor(data, svg, width, height, num_of_instances, num_of_dims) {
+    constructor(data, svg, width, height, num_of_instances, num_of_dims, tip) {
         this.data = data;
         this.svg = svg;
+        this.tip = tip;
 
         // Calculate unit length for row and column
         const unit_width = width / num_of_dims;
@@ -25,7 +26,9 @@ class HeatMap {
             .attr('y', d => d.y * unit_height)
             .attr('width', d => d.w * unit_width)
             .attr('height', d => d.h * unit_height)
-            .style('fill', d => divergingScale(d.mean));
+            .style('fill', d => divergingScale(d.mean))
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
 
     }
 }

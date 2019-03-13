@@ -38,6 +38,7 @@ def query_bert_mrpc():
 
     # 1
     size = int(request.json['size'])
+    print('Sample size: ', size)
 
     query_result = random_sample(size, 'bert_mrpc')
 
@@ -64,7 +65,7 @@ def query_bert_mrpc():
     vectors = reorder(vectors, cluster_results['row']['new_idx'], cluster_results['col']['new_idx'])
 
     # 4
-    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=10, num_of_cols=10)
+    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=3, num_of_cols=3)
 
     return jsonify(
         sentences=sentences,

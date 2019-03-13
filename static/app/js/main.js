@@ -1,6 +1,7 @@
 import "../css/main.scss";
 
 import * as d3 from "d3";
+import d3_tip from "d3-tip";
 
 import {postJson} from "./util";
 
@@ -14,6 +15,7 @@ import {HeatMap} from './heatmap';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
+window.d3_tip = d3_tip;
 
 // Set height for the subset area to support overflow scroll
 d3.select('#subset-area')
@@ -125,6 +127,9 @@ function subsetArea(term, data) {
 // Designate the area to draw dimensions
 let dimensionDrawArea;
 
+// Tooltip for heatmap
+let tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean; });
+
 function dimensionArea(term, data) {
     // Show selected subset's information
     let infoRow = d3.select('#selected-subset-info')
@@ -145,14 +150,15 @@ function dimensionArea(term, data) {
         .style('height', window.innerHeight * 0.9 + 'px')
         .style('overflow-y', 'scroll');
 
-    const width = infoRow.node().parentElement.clientWidth * 0.8, 
-        height = 50; // width and height for svg
+    const width = infoRow.node().parentElement.clientWidth * 0.5, 
+          height = 300; // width and height for svg
 
     let heatmapSvg = dimensionDrawArea.append('svg')
                         .attr('width', width + 20)
-                        .attr('height', height + 20);
+                        .attr('height', height + 20)
+                        .call(tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length);
+    let heatmap = new HeatMap(data.heatmap_data, heatmapSvg, width, height, data.vectors.length, data.vectors[0].length, tip);
 }
 
 // Retrive subset data from a specified endpoint, then visualize the data
