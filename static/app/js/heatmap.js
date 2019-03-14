@@ -5,11 +5,12 @@ import {Scatterplot2D} from './scatterplot2d';
 
 
 class HeatMap {
-    constructor(data, request_identifier, svg, width, height, padding, num_of_instances, num_of_dims, tip) {
+    constructor(data, request_identifier, svg, width, height, padding, num_of_instances, num_of_dims, heatmap_tip, scatterplot_tip) {
         this.data = data;
         this.request_identifier = request_identifier;
         this.svg = svg;
-        this.tip = tip;
+        this.heatmap_tip = heatmap_tip;
+        this.scatterplot_tip = scatterplot_tip;
 
         this.width = width;
         this.height = height;
@@ -119,8 +120,8 @@ class HeatMap {
             .attr('width', d => d.w * unit_width)
             .attr('height', d => d.h * unit_height)
             .style('fill', d => divergingScale(d.mean))
-            .on('mouseover', tip.show)
-            .on('mouseout', tip.hide)
+            .on('mouseover', heatmap_tip.show)
+            .on('mouseout', heatmap_tip.hide)
             .on('click', (d) => {
                 const request_data = {
                     'request_identifier': this.request_identifier,
@@ -159,9 +160,10 @@ class HeatMap {
         
         let scatterplotSvg = scatterplotRow.append('svg')
             .attr('width', 500)
-            .attr('height', 400);
+            .attr('height', 400)
+            .call(this.scatterplot_tip);
 
-        this.scatterplot = new Scatterplot2D(data.coords, scatterplotSvg, 500, 400, 30);
+        this.scatterplot = new Scatterplot2D(data.plot_data, scatterplotSvg, 500, 400, 30, this.scatterplot_tip);
     }
 
     drawSelected() {

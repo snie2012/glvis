@@ -1,24 +1,29 @@
 import * as d3 from "d3";
 
 class Scatterplot2D {
-    constructor(data, svg, w, h, padding) {
+    constructor(data, svg, w, h, padding, tip) {
         this.data = data;
         this.svg = svg;
         this.w = w;
         this.h = h;
         this.padding = padding;
+        this.tip = tip;
 
         //Set scales
-        this.xScale = d3.scaleLinear()
-            .domain((d3.extent(data, d => d[0])))
+        let xScale = d3.scaleLinear()
+            .domain((d3.extent(data, d => d.coords[0])))
             .range([padding, w - padding]);
 
-        this.yScale = d3.scaleLinear()
-            .domain((d3.extent(data, d => d[1])))
+        let yScale = d3.scaleLinear()
+            .domain((d3.extent(data, d => d.coords[1])))
             .range([h - padding, padding]);
 
-        this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10).tickSizeOuter(0);
-        this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10).tickSizeOuter(0);
+        let xAxis = d3.axisBottom().scale(xScale).ticks(10).tickSizeOuter(0);
+        let yAxis = d3.axisLeft().scale(yScale).ticks(10).tickSizeOuter(0);
+
+        // Define color scale
+
+        let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
 
         this.group = svg.append('g')
                 .attr('transform', `translate(${0}, ${0})`)
@@ -29,38 +34,38 @@ class Scatterplot2D {
             .data(data)
             .enter()
             .append("circle")
-            .attr("cx", d => this.xScale(d[0]))
-            .attr("cy", d => h - this.yScale(d[1]))
-            .attr("r", 2)
-            .attr("fill", "lightgray")
+            .attr("cx", d => xScale(d.coords[0]))
+            .attr("cy", d => h - yScale(d.coords[1]))
+            .attr("r", 3)
+            .attr("fill", d => divergingScale(d.prediction['prob']))
             .style("stroke", 'black')
-            .attr("stroke-width", 0.5);
+            .attr("stroke-width", 0.1)
+            .on('mouseover', tip.show)
+            .on('mouseout', tip.hide);
 
         //X axis
-        this.gX = svg.append("g")
+        let gX = svg.append("g")
             .attr("class", "x axis")	
             .attr("transform", "translate(0," + (h - padding) + ")")
-            .call(this.xAxis);
+            .call(xAxis);
 
         //Y axis
-        this.gY = svg.append("g")
+        let gY = svg.append("g")
             .attr("class", "y axis")	
             .attr("transform", "translate(" + padding + ", 0)")
-            .call(this.yAxis);
+            .call(yAxis);
         
         // Bind zoom event
-        // this.zoom = d3.zoom()
-        //     .scaleExtent([1, 40])
-        //     .translateExtent([[-100, -100], [w, h]])
-        //     .on("zoom", this.zoomed.bind(this)); 
+        let zoom = d3.zoom()
+            .scaleExtent([1, 40])
+            .translateExtent([[0, 0], [w + 20, h + 20]])
+            .on("zoom", () => {
+                this.group.attr('transform', d3.event.transform);
+                gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
+                gY.call(yAxis.scale(d3.event.transform.rescaleY(yScale)));
+            }); 
     
-        // svg.call(this.zoom);
-    }
-
-    zoomed() {
-        this.group.attr('transform', d3.event.transform);
-        this.gX.call(this.xAxis.scale(d3.event.transform.rescaleX(this.xScale)));
-        this.gY.call(this.yAxis.scale(d3.event.transform.rescaleY(this.yScale)));
+        svg.call(zoom);
     }
 
     resetted() {

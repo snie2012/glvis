@@ -30,29 +30,51 @@ def serve_tsne():
     instances = response['instances']
     dimensions = response['dimensions']
 
+    predictions = None
+
     # Select and reorder data based on selection mode
     if selection_model == 'Dimensions_Only':
         dimensions = np.concatenate(response['dimensions'])
         vectors = data.vectors[:, dimensions]
+        predictions = data.prediction
+
     elif selection_model == 'Instances_Only':
         instances = np.concatenate(response['instances'])
         vectors = data.vectors[instances, :]
+        predictions = data.prediction[instances]
+
     elif selection_model == 'Both_Instances_and_Dimensions':
         instances = np.concatenate(response['instances'])
         dimensions = np.concatenate(response['dimensions'])
         vectors = data.vectors[instances, :]
         vectors = vectors[:, dimensions]
+        predictions = data.prediction[instances]
+
     elif selection_model == 'Cell_Selected':
         vectors = data.vectors[instances, :]
         vectors = vectors[:, dimensions]
+        predictions = data.prediction[instances]
     else:
         raise Exception()
 
     print('Perform TSNE on shape: ', vectors.shape)
     coords = TSNE(n_components=2).fit_transform(np.array(vectors))
 
+    # Process prediction data
+    preds = []
+    for elm in predictions:
+        idx = np.argmax(elm)
+        prob = elm[idx] if idx == 1 else -elm[idx]
+        preds.append({
+            'class': int(idx),
+            'prob': float(prob)
+        })
+
     return jsonify(
-        coords=coords.tolist()
+        plot_data = [{
+            'coords': coord,
+            'prediction': pred
+        } for coord, pred in zip(coords.tolist(), preds)]
     )
 
 @app.route('/query_bert_mrpc', methods=['POST'])
@@ -77,6 +99,8 @@ def query_bert_mrpc():
     sentences = [item['sentence'] for item in query_result]
     # reduce_mean = [item['reduce_mean'] for item in query_result]
     vectors = np.array([item['cls_token'] for item in query_result])
+
+    prediction = np.array([item['prediction'] for item in query_result])
 
     # Calculate the statistics for each dimension
     mean = np.mean(vectors, axis=0)
@@ -105,6 +129,7 @@ def query_bert_mrpc():
     bert_mrpc_data.vectors = vectors
     bert_mrpc_data.stats = stats
     bert_mrpc_data.heatmap_data = heatmap_data
+    bert_mrpc_data.prediction = prediction
 
     request_identifier = str(next(counter))
     data_dict[request_identifier] = bert_mrpc_data

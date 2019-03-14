@@ -48,5 +48,13 @@ class BertMrpcData:
     @heatmap_data.setter
     def heatmap_data(self, heatmap_data):
         self._heatmap_data = heatmap_data
+
+    @property
+    def prediction(self):
+        return self._prediction
+
+    @prediction.setter
+    def prediction(self, prediction):
+        self._prediction = prediction
     
     
