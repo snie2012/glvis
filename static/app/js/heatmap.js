@@ -156,14 +156,17 @@ class HeatMap {
             .append('div')
             .attr('class', 'row m-1')
             .attr('id', 'scatterplot2d')
-            .style('height', window.innerHeight * 0.5 + 'px');
+            .style('height', window.innerHeight * 0.45 + 'px');
         
+        const width = scatterplotRow.node().parentElement.clientWidth, 
+              height = scatterplotRow.node().parentElement.clientHeight * 0.95, 
+              padding = 30;
         let scatterplotSvg = scatterplotRow.append('svg')
-            .attr('width', 500)
-            .attr('height', 400)
+            .attr('width', width)
+            .attr('height', height)
             .call(this.scatterplot_tip);
 
-        this.scatterplot = new Scatterplot2D(data.plot_data, scatterplotSvg, 500, 400, 30, this.scatterplot_tip);
+        this.scatterplot = new Scatterplot2D(data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
     }
 
     drawSelected() {

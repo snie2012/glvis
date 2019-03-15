@@ -67,7 +67,8 @@ function subsetArea(term, data) {
     let stdCol = histRow.append('div').attr('class', 'col p-1');
 
     // Set the width and height for each histogram
-    const width = 200, height = 200;
+    const width = histRow.node().parentElement.clientWidth * 0.5, 
+          height = 200;
 
     // Create a svg for the histogram of mean values
     // and use it to plot histogram for mean values
@@ -151,11 +152,12 @@ function dimensionArea(term, data) {
     heatmapDrawArea = d3.select('#heatmap-area')
         .append('div')
         .attr('class', 'row m-1')
-        .style('height', window.innerHeight * 0.4 + 'px');
+        .style('height', window.innerHeight * 0.45 + 'px');
 
-    const width = infoRow.node().parentElement.clientWidth * 0.5, 
-          height = 300; // width and height for svg
-    const padding = 20; // padding for group inside svg
+    // width, height and padding for scatterplot svg
+    const width = heatmapDrawArea.node().parentElement.clientWidth - 50, 
+          height = heatmapDrawArea.node().parentElement.clientHeight * 0.85; 
+    const padding = 20;
 
     let heatmapSvg = heatmapDrawArea.append('svg')
                         .attr('width', width + 50)

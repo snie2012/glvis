@@ -18,15 +18,18 @@ class Scatterplot2D {
             .domain((d3.extent(data, d => d.coords[1])))
             .range([h - padding, padding]);
 
-        let xAxis = d3.axisBottom().scale(xScale).ticks(10).tickSizeOuter(0);
-        let yAxis = d3.axisLeft().scale(yScale).ticks(10).tickSizeOuter(0);
+        let xAxis = d3.axisBottom().scale(xScale).ticks(10);
+        let yAxis = d3.axisLeft().scale(yScale).ticks(10);
 
         // Define color scale
-
         let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
 
-        this.group = svg.append('g')
-                .attr('transform', `translate(${0}, ${0})`)
+        // Define transform group
+        let transformGroup = svg.append('g')
+            .attr('transform', `translate(${5}, ${0})`)
+
+        this.group = transformGroup.append('g')
+                // .attr('transform', `translate(${0}, ${0})`)
                 .attr('width', [padding, w - padding])
                 .attr('height', [h-padding, padding]);
 
@@ -36,29 +39,29 @@ class Scatterplot2D {
             .append("circle")
             .attr("cx", d => xScale(d.coords[0]))
             .attr("cy", d => h - yScale(d.coords[1]))
-            .attr("r", 3)
+            .attr("r", 4)
             .attr("fill", d => divergingScale(d.prediction['prob']))
-            .style("stroke", 'black')
-            .attr("stroke-width", 0.1)
+            // .style("stroke", 'black')
+            // .attr("stroke-width", 0.1)
             .on('mouseover', tip.show)
             .on('mouseout', tip.hide);
 
         //X axis
-        let gX = svg.append("g")
+        let gX = transformGroup.append("g")
             .attr("class", "x axis")	
-            .attr("transform", "translate(0," + (h - padding) + ")")
+            .attr("transform", "translate(0," + (h - padding + 6) + ")")
             .call(xAxis);
 
         //Y axis
-        let gY = svg.append("g")
+        let gY = transformGroup.append("g")
             .attr("class", "y axis")	
-            .attr("transform", "translate(" + padding + ", 0)")
+            .attr("transform", "translate(" + (padding - 6) + ", 0)")
             .call(yAxis);
         
         // Bind zoom event
         let zoom = d3.zoom()
             .scaleExtent([1, 40])
-            .translateExtent([[0, 0], [w + 20, h + 20]])
+            .translateExtent([[0, 0], [w, h]])
             .on("zoom", () => {
                 this.group.attr('transform', d3.event.transform);
                 gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
