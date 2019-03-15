@@ -22,7 +22,7 @@ counter = itertools.count() # Counter to keep track of each subset request
 data_dict = {} # Dictionary to store all the calculated data for each subset request
 
 tsne_reducer = TSNE(n_components=2)
-umap_reducer = umap.UMAP()
+umap_reducer = umap.UMAP(n_components=2)
 
 @app.route('/dimension_reduction', methods=['POST'])
 def serve_dimension_reduction():
@@ -157,17 +157,22 @@ def query_bert_mrpc():
     )
 
 
-# @app.route('/heatmap_data', methods=['POST'])
-# def heatmap_data():
-#     response = request.json
+@app.route('/heatmap_data', methods=['POST'])
+def heatmap_data():
+    response = request.json
 
-#     request_identifier = response['request_identifier']
-#     row_num = int(response['row_num'])
-#     col_num = int(response['col_num'])
+    request_identifier = response['request_identifier']
+    row_num = int(response['row_num'])
+    col_num = int(response['col_num'])
     
-#     data = data_dict[request_identifier]
+    data = data_dict[request_identifier]
 
-#     heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=10, num_of_cols=10)
+    heatmap_data = prepare_heatmap_data(data.vectors, data.cluster_results, num_of_rows=row_num, num_of_cols=col_num)
+
+    return jsonify(
+        heatmap_data=heatmap_data
+    )
+
 
 @app.route('/')
 def index():

@@ -18,13 +18,15 @@ class HeatMap {
         this.height = height;
         this.padding = padding;
 
+        // Flatten summary data
+        this.summary_flattend = _.flatten(this.summary_data);
+
+        // Flatten detail data
+        this.detail_flattend = _.flatten(this.detail_data);
+
         // Calculate unit length for row and column
         this.unit_width = width / detail_data[0].length;
         this.unit_height = height / detail_data.length;
-
-        // Flatten data
-        this.summary_flattend = _.flatten(summary_data);
-        this.detail_flattend = _.flatten(detail_data);
 
         // Define color scale
         this.summary_color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(this.summary_flattend, d => d.mean));
@@ -36,6 +38,9 @@ class HeatMap {
 
     reDraw() {
         if (this.transform_group) this.transform_group.remove();
+
+        // Flatten summary data. This is needed because summary_data can be updated
+        this.summary_flattend = _.flatten(this.summary_data);
 
         // Define the overall group, apply some transforms
         this.transform_group = this.svg.append('g')

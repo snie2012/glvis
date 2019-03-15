@@ -125,6 +125,7 @@ function subsetArea(term, data) {
 // Designate the area to draw dimensions
 let heatmapDrawArea;
 let scatterplotButton;
+let curRowNum = 5, curColNum = 5;
 
 // Tooltip for heatmap
 let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
@@ -158,43 +159,89 @@ function dimensionArea(term, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
+    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
 
 
     // Pop information to row and column cluster dropdown menus
     let rowMenu = d3.select('#row-menu');
-    rowMenu.select('button').style('visibility', 'visible').html('Rows');
+    
+    let rowButton = rowMenu.select('button');
+    if (rowButton) rowButton.remove();
+    rowMenu.append('button')
+        .attr('class', 'btn btn-secondary dropdown-toggle')
+        .attr('type', 'button')
+        .attr('id', 'dropdownMenuButton')
+        .attr('data-toggle', 'dropdown')
+        .attr('aria-haspopup', 'true')
+        .attr('aria-expanded', 'false')
+        .html('Rows');
+
     let rowDropDown = rowMenu.select('div');
     if (rowDropDown) rowDropDown.remove();
     rowDropDown = rowMenu.append('div')
         .attr('class', 'dropdown-menu')
         .attr('aria-labelledby', 'dropdownMenuButton');
     const rowNum = data.vectors.length < 11 ? data.vectors.length : 11;
-    for (let i = 1; i < rowNum; i++) {
+    for (let i = 2; i < rowNum; i++) {
         rowDropDown.append('a')
             .attr('class', 'dropdown-item')
-            .attr('href', '#')
             .html(i)
-            .on('click', function(e) {
-                console.log(i);
+            .on('click', function() {
+                if (i == curRowNum) return; // Ignore if the same row is selected
+                curRowNum = i;
+
+                // Request new heatmap data and redraw the corresponding heatmap
+                const request_data = {
+                    'request_identifier': heatMap.request_identifier,
+                    'row_num': curRowNum,
+                    'col_num': curColNum
+                }
+                
+                postJson('/heatmap_data', request_data).then(data => {
+                    heatMap.summary_data = data.heatmap_data;
+                    heatMap.reDraw();
+                })
             });
     }
 
     let colMenu = d3.select('#col-menu');
-    colMenu.select('button').style('visibility', 'visible').html('Columns');
+
+    let colButton = colMenu.select('button');
+    if (colButton) colButton.remove();
+    colMenu.append('button')
+        .attr('class', 'btn btn-secondary dropdown-toggle')
+        .attr('type', 'button')
+        .attr('id', 'dropdownMenuButton')
+        .attr('data-toggle', 'dropdown')
+        .attr('aria-haspopup', 'true')
+        .attr('aria-expanded', 'false')
+        .html('Columnss');
+
     let colDropDown = colMenu.select('div');
     if (colDropDown) colDropDown.remove();
     colDropDown = colMenu.append('div')
         .attr('class', 'dropdown-menu')
         .attr('aria-labelledby', 'dropdownMenuButton');
     const colNum = data.vectors[0].length < 11 ? data.vectors[0].length : 11;
-    for (let i = 1; i < colNum; i++) {
+    for (let i = 2; i < colNum; i++) {
         colDropDown.append('a')
             .attr('class', 'dropdown-item')
-            .attr('href', '#')
             .html(i)
-            .on('click', function(e) {
-                console.log(i);
+            .on('click', function() {
+                if (i == curColNum) return; // Ignore if the same column is selected
+                curColNum = i;
+
+                // Request new heatmap data and redraw the corresponding heatmap
+                const request_data = {
+                    'request_identifier': heatMap.request_identifier,
+                    'row_num': curRowNum,
+                    'col_num': curColNum
+                }
+
+                postJson('/heatmap_data', request_data).then(data => {
+                    heatMap.summary_data = data.heatmap_data;
+                    heatMap.reDraw();
+                })
             });
     }
 
@@ -207,7 +254,7 @@ function dimensionArea(term, data) {
     
         // Bind click event to scatterplot button
     scatterplotButton.on('click', () => {
-        heatmap.drawSelected();
+        heatMap.drawSelected();
     })
 }
 
