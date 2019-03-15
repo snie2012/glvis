@@ -126,7 +126,7 @@ let heatmapDrawArea;
 let scatterplotButton;
 
 // Tooltip for heatmap
-let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean; });
+let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
 let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { 
     return "prediction: " + d.prediction['class'] + '</br>' + 'probability: ' + d.prediction['prob']; 
 });
@@ -164,7 +164,7 @@ function dimensionArea(term, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, data.request_identifier, heatmapSvg, width, height, padding, data.vectors.length, data.vectors[0].length, heatmap_tip, scatterplot_tip);
+    let heatmap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Detail');
 
     // Bind click event to scatterplot button
     scatterplotButton.on('click', () => {

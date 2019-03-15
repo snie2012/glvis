@@ -5,25 +5,29 @@ import {Scatterplot2D} from './scatterplot2d';
 
 
 class HeatMap {
-    constructor(data, request_identifier, svg, width, height, padding, num_of_instances, num_of_dims, heatmap_tip, scatterplot_tip) {
-        this.data = data;
+    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode) {
+        this.summary_data = summary_data;
+        this.detail_data = detail_data;
         this.request_identifier = request_identifier;
         this.svg = svg;
         this.heatmap_tip = heatmap_tip;
         this.scatterplot_tip = scatterplot_tip;
+        this.mode = mode;
 
         this.width = width;
         this.height = height;
 
         // Calculate unit length for row and column
-        const unit_width = width / num_of_dims;
-        const unit_height = height / num_of_instances;
+        const unit_width = width / detail_data[0].length;
+        const unit_height = height / detail_data.length;
 
         // Flatten data
-        const flattend_data = _.flatten(data);
+        this.summary_flattend = _.flatten(summary_data);
+        this.detail_flattend = _.flatten(detail_data);
 
         // Define color scale
-        let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(flattend_data, d => d.mean));
+        this.summary_color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(this.summary_flattend, d => d.mean));
+        this.detail_color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(this.detail_flattend));
 
         // Define the overall group, apply some transforms
         this.transform_group = this.svg.append('g')
@@ -37,7 +41,7 @@ class HeatMap {
 
         this.col_group
             .selectAll('rect')
-            .data(data[0].map((elm) => {elm['col_selected'] = this.col_selected; return elm;}))
+            .data(summary_data[0].map((elm) => {elm['col_selected'] = this.col_selected; return elm;}))
             .enter()
             .append('rect')
             .attr('x', d => d.x * unit_width)
@@ -47,7 +51,7 @@ class HeatMap {
             .style('stroke', 'black')
             .style('stroke-width', 0.3)
             .style('stroke-dasharray', (d, i) => {
-                if (i == data.length - 1) return;
+                if (i == summary_data.length - 1) return;
                 return (d.w * unit_width) + ',' + (padding * 0.8) + ',' + (d.w * unit_width + padding * 0.8);
             })
             .style('fill', 'white')
@@ -76,7 +80,7 @@ class HeatMap {
 
         this.row_group
             .selectAll('rect')
-            .data(data.map(row => row[0]).map((elm) => {elm['row_selected'] = this.row_selected; return elm;}))
+            .data(summary_data.map(row => row[0]).map((elm) => {elm['row_selected'] = this.row_selected; return elm;}))
             .enter()
             .append('rect')
             .attr('x', d => d.x * unit_width)
@@ -86,7 +90,7 @@ class HeatMap {
             .style('stroke', 'black')
             .style('stroke-width', 0.3)
             .style('stroke-dasharray', (d, i) => {
-                if (i == data[0].length - 1) return;
+                if (i == summary_data[0].length - 1) return;
                 return (padding * 0.8 + d.h * unit_height) + ',' + (padding * 0.8) + ',' + (d.h * unit_height);
             })
             .style('fill', 'white')
@@ -109,20 +113,13 @@ class HeatMap {
         // Draw heatmap cells
         this.cell_group = this.transform_group.append('g')
             .attr('transform', `translate(${padding}, ${padding})`);
-
-        this.cell_group
-            .selectAll('rect')
-            .data(flattend_data)
-            .enter()
-            .append('rect')
-            .attr('x', d => d.x * unit_width)
-            .attr('y', d => d.y * unit_height)
-            .attr('width', d => d.w * unit_width)
-            .attr('height', d => d.h * unit_height)
-            .style('fill', d => divergingScale(d.mean))
-            .on('mouseover', heatmap_tip.show)
+        
+        this.cells = mode == 'Summary' ? this.drawSummaryCells(unit_width, unit_height) : this.drawDetailCells(unit_width, unit_height);
+            
+        this.cells.on('mouseover', heatmap_tip.show)
             .on('mouseout', heatmap_tip.hide)
             .on('click', (d) => {
+                if (this.mode == 'Detail') return;
                 const request_data = {
                     'request_identifier': this.request_identifier,
                     'selection_mode': 'Cell_Selected',
@@ -146,6 +143,36 @@ class HeatMap {
             }); 
     
         this.svg.call(zoom);
+    }
+
+    drawSummaryCells(unit_width, unit_height) {
+        return this.cell_group
+            .selectAll('rect')
+            .data(this.summary_flattend)
+            .enter()
+            .append('rect')
+            .attr('x', d => d.x * unit_width)
+            .attr('y', d => d.y * unit_height)
+            .attr('width', d => d.w * unit_width)
+            .attr('height', d => d.h * unit_height)
+            .style('fill', d => this.summary_color_scale(d.mean));
+    }
+
+    drawDetailCells(unit_width, unit_height) {
+        return this.cell_group
+            .selectAll('rect')
+            .data(this.detail_flattend)
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => {
+                return unit_width * (i % this.detail_data[0].length);
+            })
+            .attr('y', (d, i) => {
+                return unit_height * Math.floor(i / this.detail_data[0].length);
+            })
+            .attr('width', unit_width)
+            .attr('height', unit_height)
+            .style('fill', d => this.detail_color_scale(d));
     }
 
     drawScatterplot(data) {
@@ -182,22 +209,22 @@ class HeatMap {
             // No row is selected, use all the rows for the selected columns
             selection_mode = 'Dimensions_Only';
             this.col_selected.forEach((col_id) => {
-                selected_dimensions.push(this.data[0][col_id].dimensions);
+                selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
         } else if (this.col_selected.size == 0) {
             // No column is selected, use all the columns for the selected rows
             selection_mode = 'Instances_Only';
             this.row_selected.forEach((row_id) => {
-                selected_instances.push(this.data[row_id][0].instances);
+                selected_instances.push(this.summary_data[row_id][0].instances);
             })
         } else {
             selection_mode = 'Both_Instances_and_Dimensions';
             this.col_selected.forEach((col_id) => {
-                selected_dimensions.push(this.data[0][col_id].dimensions);
+                selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
 
             this.row_selected.forEach((row_id) => {
-                selected_instances.push(this.data[row_id][0].instances);
+                selected_instances.push(this.summary_data[row_id][0].instances);
             })
         }
 
