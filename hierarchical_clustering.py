@@ -51,7 +51,8 @@ def cluster_and_group(dist_mat, num_of_points, linkage_type='average', group_typ
             partial_sum = count.cumsum()
             groups[key] = partial_sum
     elif group_type == 'maxclust':
-        for num_cluster in range(2, num_of_points // 2):
+        max_num = num_of_points if num_of_points < 11 else 11
+        for num_cluster in range(2, max_num):
             fc_num = hier.fcluster(Y, num_cluster, criterion='maxclust')
             fc_num = fc_num[new_idx] # Index fc_num according to the new order
             count = np.array([len(list(g)) for k, g in itertools.groupby(fc_num)])

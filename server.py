@@ -63,7 +63,7 @@ def serve_dimension_reduction():
     else:
         raise Exception()
 
-    print('Perform TSNE on shape: ', vectors.shape)
+    print('Perform dimension reduction on shape: ', vectors.shape)
     if dm_method == 'tsne':
         coords = tsne_reducer.fit_transform(vectors)
     elif dm_method == 'umap':
