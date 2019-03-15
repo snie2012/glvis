@@ -5,7 +5,7 @@ def prepare_heatmap_data(mat, cluster_results, num_of_rows=10, num_of_cols=10):
     '''
     Prepare the data to draw heatmap
     
-    Notice: we assume mat is not reindexed before the cluster results
+    Notice: we assume mat is NOT reindexed before the cluster results
     '''
     num_of_rows = num_of_rows if num_of_rows < len(mat) else len(mat)
     num_of_cols = num_of_cols if num_of_cols < len(mat[0]) else len(mat[0])

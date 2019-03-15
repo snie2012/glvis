@@ -94,9 +94,8 @@ def query_bert_mrpc():
     Operation flow:
     1. Query database to get the embeddings
     2. Perform hierarchical clustering on the embeddings
-    3. Reorder the embeddings based on the clustering results
-    4. Prepare drawing information/data to be used in the front end
-    5. Send the data back to the front end
+    3. Prepare drawing information/data to be used in the front end
+    4. Send the data back to the front end
     '''
     # Initiate data class
     bert_mrpc_data = BertMrpcData()
@@ -129,15 +128,19 @@ def query_bert_mrpc():
     cluster_results = cluster_row_and_col(vectors)
 
     # 3
-    vectors = reorder(vectors, cluster_results['row']['new_idx'], cluster_results['col']['new_idx'])
+    reordered = reorder(vectors, cluster_results['row']['new_idx'], cluster_results['col']['new_idx'])
 
     # 4
-    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=10, num_of_cols=10)
+    heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=5, num_of_cols=5)
 
     # Set values for the data class
+    reordered = reorder(vectors, cluster_results['row']['new_idx'], cluster_results['col']['new_idx'])
+
+    bert_mrpc_data.reordered = reordered
     bert_mrpc_data.size = size
     bert_mrpc_data.sentences = sentences
     bert_mrpc_data.vectors = vectors
+    bert_mrpc_data.cluster_results = cluster_results
     bert_mrpc_data.stats = stats
     bert_mrpc_data.heatmap_data = heatmap_data
     bert_mrpc_data.prediction = prediction
@@ -148,11 +151,23 @@ def query_bert_mrpc():
     return jsonify(
         request_identifier=request_identifier,
         sentences=sentences,
-        vectors=vectors.tolist(),
+        vectors=reordered.tolist(),
         stats=stats,
         heatmap_data=heatmap_data
     )
 
+
+# @app.route('/heatmap_data', methods=['POST'])
+# def heatmap_data():
+#     response = request.json
+
+#     request_identifier = response['request_identifier']
+#     row_num = int(response['row_num'])
+#     col_num = int(response['col_num'])
+    
+#     data = data_dict[request_identifier]
+
+#     heatmap_data = prepare_heatmap_data(vectors, cluster_results, num_of_rows=10, num_of_cols=10)
 
 @app.route('/')
 def index():

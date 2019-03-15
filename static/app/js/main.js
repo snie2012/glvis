@@ -2,6 +2,7 @@ import "../css/main.scss";
 
 import * as d3 from "d3";
 import d3_tip from "d3-tip";
+import 'bootstrap';
 
 import {postJson} from "./util";
 
@@ -137,13 +138,6 @@ function dimensionArea(term, data) {
 
     infoRow.html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
 
-    // Create scatterplotting button
-    if (scatterplotButton) scatterplotButton.remove();
-    scatterplotButton = d3.select('#button-area').append('button')
-        .attr('type', 'button')
-        .attr('class', 'btn btn-primary')
-        .html('Scatterplotting');
-
     // Draw heatmap for the selected subset
 
     // Clear dimension draw area if it already exists
@@ -166,7 +160,52 @@ function dimensionArea(term, data) {
     
     let heatmap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
 
-    // Bind click event to scatterplot button
+
+    // Pop information to row and column cluster dropdown menus
+    let rowMenu = d3.select('#row-menu');
+    rowMenu.select('button').style('visibility', 'visible').html('Rows');
+    let rowDropDown = rowMenu.select('div');
+    if (rowDropDown) rowDropDown.remove();
+    rowDropDown = rowMenu.append('div')
+        .attr('class', 'dropdown-menu')
+        .attr('aria-labelledby', 'dropdownMenuButton');
+    const rowNum = data.vectors.length < 11 ? data.vectors.length : 11;
+    for (let i = 1; i < rowNum; i++) {
+        rowDropDown.append('a')
+            .attr('class', 'dropdown-item')
+            .attr('href', '#')
+            .html(i)
+            .on('click', function(e) {
+                console.log(i);
+            });
+    }
+
+    let colMenu = d3.select('#col-menu');
+    colMenu.select('button').style('visibility', 'visible').html('Columns');
+    let colDropDown = colMenu.select('div');
+    if (colDropDown) colDropDown.remove();
+    colDropDown = colMenu.append('div')
+        .attr('class', 'dropdown-menu')
+        .attr('aria-labelledby', 'dropdownMenuButton');
+    const colNum = data.vectors[0].length < 11 ? data.vectors[0].length : 11;
+    for (let i = 1; i < colNum; i++) {
+        colDropDown.append('a')
+            .attr('class', 'dropdown-item')
+            .attr('href', '#')
+            .html(i)
+            .on('click', function(e) {
+                console.log(i);
+            });
+    }
+
+    // Create scatterplotting button
+    if (scatterplotButton) scatterplotButton.remove();
+    scatterplotButton = d3.select('#button-area').append('button')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-primary')
+        .html('Scatterplot');
+    
+        // Bind click event to scatterplot button
     scatterplotButton.on('click', () => {
         heatmap.drawSelected();
     })
