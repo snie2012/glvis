@@ -124,10 +124,11 @@ class HeatMap {
                     'request_identifier': this.request_identifier,
                     'selection_mode': 'Cell_Selected',
                     'instances': d.instances,
-                    'dimensions': d.dimensions
+                    'dimensions': d.dimensions,
+                    'dm_method': 'umap'
                 }
 
-                postJson('/tsne', request_data).then(data => {
+                postJson('/dimension_reduction', request_data).then(data => {
                     console.log(data);
                     this.drawScatterplot(data);
                 })
@@ -235,10 +236,11 @@ class HeatMap {
             'request_identifier': this.request_identifier,
             'selection_mode': selection_mode,
             'instances': selected_instances,
-            'dimensions': selected_dimensions
+            'dimensions': selected_dimensions,
+            'dm_method': 'umap'
         }
 
-        postJson('/tsne', request_data).then(data => {
+        postJson('/dimension_reduction', request_data).then(data => {
             console.log(data);
             this.drawScatterplot(data);
         })

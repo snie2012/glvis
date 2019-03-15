@@ -164,7 +164,7 @@ function dimensionArea(term, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatmap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Detail');
+    let heatmap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
 
     // Bind click event to scatterplot button
     scatterplotButton.on('click', () => {

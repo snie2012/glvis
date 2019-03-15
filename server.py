@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.manifold import TSNE
+import umap
 import itertools
 
 from flask import Flask, jsonify, render_template, request
@@ -20,9 +21,14 @@ app = Flask(__name__)
 counter = itertools.count() # Counter to keep track of each subset request
 data_dict = {} # Dictionary to store all the calculated data for each subset request
 
-@app.route('/tsne', methods=['POST'])
-def serve_tsne():
+tsne_reducer = TSNE(n_components=2)
+umap_reducer = umap.UMAP()
+
+@app.route('/dimension_reduction', methods=['POST'])
+def serve_dimension_reduction():
     response = request.json
+
+    dm_method = response['dm_method']
 
     selection_model = response['selection_mode']
     data = data_dict[response['request_identifier']]
@@ -58,7 +64,12 @@ def serve_tsne():
         raise Exception()
 
     print('Perform TSNE on shape: ', vectors.shape)
-    coords = TSNE(n_components=2).fit_transform(np.array(vectors))
+    if dm_method == 'tsne':
+        coords = tsne_reducer.fit_transform(vectors)
+    elif dm_method == 'umap':
+        coords = umap_reducer.fit_transform(vectors)
+    else:
+        raise Exception()
 
     # Process prediction data
     preds = []
