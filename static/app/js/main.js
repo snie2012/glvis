@@ -20,9 +20,9 @@ d3.select('#subset-area')
     .style('overflow-y', 'scroll');
 
 // Set height for the domain area to support overflow scroll
-d3.select('#domain-area')
-    .style('height', window.innerHeight * 0.9 + 'px')
-    .style('overflow-y', 'scroll');
+// d3.select('#domain-area')
+//     .style('height', window.innerHeight * 0.9 + 'px')
+//     .style('overflow-y', 'scroll');
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
@@ -126,6 +126,7 @@ function subsetArea(term, data) {
 let heatmapDrawArea;
 let scatterplotButton;
 let curRowNum = 5, curColNum = 5;
+const maxClusterNum = 31;
 
 // Tooltip for heatmap
 let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
@@ -181,7 +182,7 @@ function dimensionArea(term, data) {
     rowDropDown = rowMenu.append('div')
         .attr('class', 'dropdown-menu')
         .attr('aria-labelledby', 'dropdownMenuButton');
-    const rowNum = data.vectors.length < 11 ? data.vectors.length : 11;
+    const rowNum = data.vectors.length < maxClusterNum ? data.vectors.length : maxClusterNum;
     for (let i = 2; i < rowNum; i++) {
         rowDropDown.append('a')
             .attr('class', 'dropdown-item')
@@ -215,14 +216,14 @@ function dimensionArea(term, data) {
         .attr('data-toggle', 'dropdown')
         .attr('aria-haspopup', 'true')
         .attr('aria-expanded', 'false')
-        .html('Columnss');
+        .html('Columns');
 
     let colDropDown = colMenu.select('div');
     if (colDropDown) colDropDown.remove();
     colDropDown = colMenu.append('div')
         .attr('class', 'dropdown-menu')
         .attr('aria-labelledby', 'dropdownMenuButton');
-    const colNum = data.vectors[0].length < 11 ? data.vectors[0].length : 11;
+    const colNum = data.vectors[0].length < maxClusterNum ? data.vectors[0].length : maxClusterNum;
     for (let i = 2; i < colNum; i++) {
         colDropDown.append('a')
             .attr('class', 'dropdown-item')

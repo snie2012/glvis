@@ -10,16 +10,16 @@ class Scatterplot2D {
         this.tip = tip;
 
         //Set scales
-        let xScale = d3.scaleLinear()
+        this.xScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d.coords[0])))
             .range([padding, w - padding]);
 
-        let yScale = d3.scaleLinear()
+        this.yScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d.coords[1])))
             .range([h - padding, padding]);
 
-        let xAxis = d3.axisBottom().scale(xScale).ticks(10);
-        let yAxis = d3.axisLeft().scale(yScale).ticks(10);
+        this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10);
+        this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
 
         // Define color scale
         let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
@@ -37,8 +37,8 @@ class Scatterplot2D {
             .data(data)
             .enter()
             .append("circle")
-            .attr("cx", d => xScale(d.coords[0]))
-            .attr("cy", d => h - yScale(d.coords[1]))
+            .attr("cx", d => this.xScale(d.coords[0]))
+            .attr("cy", d => h - this.yScale(d.coords[1]))
             .attr("r", 4)
             .attr("fill", d => divergingScale(d.prediction['prob']))
             // .style("stroke", 'black')
@@ -47,34 +47,83 @@ class Scatterplot2D {
             .on('mouseout', tip.hide);
 
         //X axis
-        let gX = transformGroup.append("g")
+        this.gX = transformGroup.append("g")
             .attr("class", "x axis")	
             .attr("transform", "translate(0," + (h - padding + 6) + ")")
-            .call(xAxis);
+            .call(this.xAxis);
 
         //Y axis
-        let gY = transformGroup.append("g")
+        this.gY = transformGroup.append("g")
             .attr("class", "y axis")	
             .attr("transform", "translate(" + (padding - 6) + ", 0)")
-            .call(yAxis);
+            .call(this.yAxis);
         
+        this.bindZoom();
+        this.bindBrush();
+    }
+
+    bindZoom() {
         // Bind zoom event
         let zoom = d3.zoom()
             .scaleExtent([1, 40])
-            .translateExtent([[0, 0], [w, h]])
+            .translateExtent([[0, 0], [this.w, this.h]])
             .on("zoom", () => {
                 this.group.attr('transform', d3.event.transform);
-                gX.call(xAxis.scale(d3.event.transform.rescaleX(xScale)));
-                gY.call(yAxis.scale(d3.event.transform.rescaleY(yScale)));
+                this.gX.call(this.xAxis.scale(d3.event.transform.rescaleX(this.xScale)));
+                this.gY.call(this.yAxis.scale(d3.event.transform.rescaleY(this.yScale)));
             }); 
-    
-        svg.call(zoom);
+
+        this.svg.call(zoom);
     }
 
-    resetted() {
+    resetZoom() {
         this.svg.transition()
             .duration(750)
             .call(this.zoom.transform, d3.zoomIdentity);
+    }
+
+    bindBrush() {
+        // Bind brush event
+        let brush = d3.brush()
+            .extent([[0, 0], [this.w, this.h]])
+            .on("brush end", this.brushEnd.bind(this));
+
+        this.svg.append("g")
+            .attr("class", "brush")
+            .call(brush);
+    }
+
+    brushEnd() {
+        // Get current selection
+        let s = d3.event.selection;
+        if (!s) return;
+
+        const xRange = [s[0][0], s[1][0]],
+              yRange = [s[1][1], s[0][1]];
+        
+        const xDomain = xRange.map(this.xScale.invert),
+              yDomain = yRange.map(this.yScale.invert);
+
+        console.log(xDomain, yDomain);
+        
+        // If nothing is selected, return
+        // if (!selected) return;
+
+        // // Calculate the selected range of value
+        // const range = selected.map(this.xScale.invert, this.xScale);
+
+        // // Get the selected instances
+        // let selectedElms = [];
+        // _.forEach(this.data, (value, idx) => {
+        //     if (value >= range[0] && value <= range[1]) {
+        //         selectedElms.push(idx);
+        //     }
+        // });
+
+        // if (selectedElms.length == 0) return;
+
+        // Plot domain visualizations with selected elements
+        
     }
 }
 
