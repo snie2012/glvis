@@ -13,16 +13,21 @@ class Scatterplot2D {
         this.xScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d.coords[0])))
             .range([padding, w - padding]);
+        this.xRescale = this.xScale.copy();
 
         this.yScale = d3.scaleLinear()
             .domain((d3.extent(data, d => d.coords[1])))
             .range([h - padding, padding]);
+        this.yRescale = this.yScale.copy();
 
         this.xAxis = d3.axisBottom().scale(this.xScale).ticks(10);
         this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
 
         // Define color scale
         let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+
+        // Bind brush events before the creation of groups and circles to allow tooltip to show
+        this.bindBrush();
 
         // Define transform group
         let transformGroup = svg.append('g')
@@ -43,8 +48,8 @@ class Scatterplot2D {
             .attr("fill", d => divergingScale(d.prediction['prob']))
             // .style("stroke", 'black')
             // .attr("stroke-width", 0.1)
-            .on('mouseover', tip.show)
-            .on('mouseout', tip.hide);
+            .on('mouseover.tip', tip.show)
+            .on('mouseout.tip', tip.hide);
 
         //X axis
         this.gX = transformGroup.append("g")
@@ -58,8 +63,8 @@ class Scatterplot2D {
             .attr("transform", "translate(" + (padding - 6) + ", 0)")
             .call(this.yAxis);
         
+        // Bind zoom event
         this.bindZoom();
-        this.bindBrush();
     }
 
     bindZoom() {
@@ -69,8 +74,11 @@ class Scatterplot2D {
             .translateExtent([[0, 0], [this.w, this.h]])
             .on("zoom", () => {
                 this.group.attr('transform', d3.event.transform);
-                this.gX.call(this.xAxis.scale(d3.event.transform.rescaleX(this.xScale)));
-                this.gY.call(this.yAxis.scale(d3.event.transform.rescaleY(this.yScale)));
+                this.xRescale = d3.event.transform.rescaleX(this.xScale);
+                this.yRescale = d3.event.transform.rescaleY(this.yScale);
+
+                this.gX.call(this.xAxis.scale(this.xRescale));
+                this.gY.call(this.yAxis.scale(this.yRescale));
             }); 
 
         this.svg.call(zoom);
@@ -101,8 +109,8 @@ class Scatterplot2D {
         const xRange = [s[0][0], s[1][0]],
               yRange = [s[1][1], s[0][1]];
         
-        const xDomain = xRange.map(this.xScale.invert),
-              yDomain = yRange.map(this.yScale.invert);
+        const xDomain = xRange.map(this.xRescale.invert),
+              yDomain = yRange.map(this.yRescale.invert);
 
         console.log(xDomain, yDomain);
         

@@ -164,6 +164,11 @@ function dimensionArea(term, data) {
 
 
     // Pop information to row and column cluster dropdown menus
+
+    // First reset rowNum and colNum
+    curRowNum = 5;
+    curColNum = 5;
+
     let rowMenu = d3.select('#row-menu');
     
     let rowButton = rowMenu.select('button');
