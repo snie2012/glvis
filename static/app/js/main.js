@@ -29,9 +29,18 @@ d3.select('#query-button').on('click', () => {
     const sample_size = document.getElementById('query-input').value;
     if (!sample_size) return;
     console.log('Sample size: ', sample_size);
-
-    const endpoint = '/query_bert_mrpc';
-    query(endpoint, sample_size);
+    
+    // Retrive subset data from a specified endpoint, then visualize the data
+    const request_data = {
+        'sample_size': sample_size,
+        'model_name': 'bert_mrpc',
+        'db_col_name': 'bert_mrpc'
+    }
+    
+    postJson('/query_model_data', request_data).then(data => {
+        console.log(data);
+        subsetArea(sample_size, data);
+    })
 })
 
 // Designate the previously selected row
@@ -125,7 +134,8 @@ function subsetArea(term, data) {
 // Designate the area to draw dimensions
 let heatmapDrawArea;
 let scatterplotButton;
-let curRowNum = 5, curColNum = 5;
+const RowNum = 2, ColNum = 3;
+let curRowNum = RowNum, curColNum = ColNum;
 const maxClusterNum = 31;
 
 // Tooltip for heatmap
@@ -166,8 +176,8 @@ function dimensionArea(term, data) {
     // Pop information to row and column cluster dropdown menus
 
     // First reset rowNum and colNum
-    curRowNum = 5;
-    curColNum = 5;
+    curRowNum = RowNum;
+    curColNum = ColNum;
 
     let rowMenu = d3.select('#row-menu');
     
@@ -261,14 +271,5 @@ function dimensionArea(term, data) {
         // Bind click event to scatterplot button
     scatterplotButton.on('click', () => {
         heatMap.drawSelected();
-    })
-}
-
-// Retrive subset data from a specified endpoint, then visualize the data
-function query(endpoint, size) {
-    postJson(endpoint, {'size': size}).then(data => {
-        console.log(data);
-
-        subsetArea(size, data);
     })
 }

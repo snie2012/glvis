@@ -42,6 +42,10 @@ class HeatMap {
         // Flatten summary data. This is needed because summary_data can be updated
         this.summary_flattend = _.flatten(this.summary_data);
 
+        // Recalculate color scale
+        this.summary_color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(this.summary_flattend, d => d.mean));
+        this.detail_color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(this.detail_flattend));
+
         // Define the overall group, apply some transforms
         this.transform_group = this.svg.append('g')
             .attr('transform', `translate(${10}, ${10})`);
@@ -182,7 +186,6 @@ class HeatMap {
                 if (this.mode == 'Detail') return;
                 const request_data = {
                     'request_identifier': this.request_identifier,
-                    'selection_mode': 'Cell_Selected',
                     'instances': d.instances,
                     'dimensions': d.dimensions,
                     'dm_method': 'umap'
@@ -235,22 +238,17 @@ class HeatMap {
 
         if (this.row_selected.size == 0 && this.col_selected.size == 0) return;
 
-        let selection_mode;
-
         if (this.row_selected.size == 0) {
             // No row is selected, use all the rows for the selected columns
-            selection_mode = 'Dimensions_Only';
             this.col_selected.forEach((col_id) => {
                 selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
         } else if (this.col_selected.size == 0) {
             // No column is selected, use all the columns for the selected rows
-            selection_mode = 'Instances_Only';
             this.row_selected.forEach((row_id) => {
                 selected_instances.push(this.summary_data[row_id][0].instances);
             })
         } else {
-            selection_mode = 'Both_Instances_and_Dimensions';
             this.col_selected.forEach((col_id) => {
                 selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
@@ -265,9 +263,8 @@ class HeatMap {
 
         const request_data = {
             'request_identifier': this.request_identifier,
-            'selection_mode': selection_mode,
-            'instances': selected_instances,
-            'dimensions': selected_dimensions,
+            'instances': _.flatten(selected_instances),
+            'dimensions': _.flatten(selected_dimensions),
             'dm_method': 'umap'
         }
 

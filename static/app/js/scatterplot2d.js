@@ -94,11 +94,21 @@ class Scatterplot2D {
         // Bind brush event
         let brush = d3.brush()
             .extent([[0, 0], [this.w, this.h]])
+            .on('start', () => {
+                d3.select("#scatterplot2d svg g.brush").raise();
+            })
             .on("brush end", this.brushEnd.bind(this));
 
-        this.svg.append("g")
+        let group = this.svg.append("g")
             .attr("class", "brush")
             .call(brush);
+        
+        // group.selectAll(".overlay")
+        //     .on("mouseup touchend", () => {
+        //         if (d3.select("#scatterplot2d svg g.brush rect.selection").style('display') == 'none') {
+        //             d3.select("#scatterplot2d svg g.brush").lower();
+        //         }
+        //     }, true);
     }
 
     brushEnd() {
@@ -112,7 +122,7 @@ class Scatterplot2D {
         const xDomain = xRange.map(this.xRescale.invert),
               yDomain = yRange.map(this.yRescale.invert);
 
-        console.log(xDomain, yDomain);
+        // console.log(xDomain, yDomain);
         
         // If nothing is selected, return
         // if (!selected) return;
