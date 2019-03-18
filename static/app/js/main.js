@@ -143,6 +143,7 @@ function subsetArea(term, data) {
 // Designate the area to draw dimensions
 let heatmapDrawArea;
 let scatterplotButton;
+let childHeatmapArea;
 const RowNum = 2, ColNum = 3;
 let curRowNum = RowNum, curColNum = ColNum;
 const maxClusterNum = 31;
@@ -179,7 +180,7 @@ function dimensionArea(term, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
+    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary', false, null);
 
 
     // Pop information to row and column cluster dropdown menus
@@ -270,15 +271,59 @@ function dimensionArea(term, data) {
             });
     }
 
-    // Create scatterplotting button
+    // Create scatterplotting button and bind event
     if (scatterplotButton) scatterplotButton.remove();
-    scatterplotButton = d3.select('#button-area').append('button')
+    scatterplotButton = d3.select('#scatterplot-button').append('button')
         .attr('type', 'button')
         .attr('class', 'btn btn-primary')
-        .html('Scatterplot');
+        .html('Scatterplot')
+        .on('click', () => heatMap.drawSelected());
     
-        // Bind click event to scatterplot button
-    scatterplotButton.on('click', () => {
-        heatMap.drawSelected();
-    })
+
+    // Create svg to draw submodel heatmap
+    if (childHeatmapArea) childHeatmapArea.remove();
+    childHeatmapArea = d3.select('#child-heatmap-area')
+        .append('div')
+        .attr('class', 'row m-1')
+        .style('height', window.innerHeight * 0.45 + 'px');
+
+    // width, height and padding for scatterplot svg
+    const child_width = childHeatmapArea.node().parentElement.clientWidth - 50;
+    const child_height = childHeatmapArea.node().parentElement.clientHeight * 0.85; 
+    const child_padding = 20;
+    
+    // Create submodel button and bind event
+    let subModelButton = d3.select('#submodel-button button');
+    if (subModelButton) subModelButton.remove();
+    d3.select('#submodel-button').append('button')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-primary')
+        .html('Submodel')
+        .on('click', () => {        
+            let childHeatmapSvg = childHeatmapArea.select('svg');
+            if (childHeatmapSvg) childHeatmapSvg.remove();
+            childHeatmapSvg = childHeatmapArea.append('svg')
+                        .attr('width', width + 50)
+                        .attr('height', height + 50)
+                        .call(heatmap_tip);
+
+            heatMap.getSelected();
+            const request = {
+                'request_identifier': heatMap.request_identifier,
+                'dimensions': _.flatten(heatMap.selected_dimensions)
+            };
+
+            postJson('/query_sub_model', request).then(data => {
+                let childHeatMap = new HeatMap(data.heatmap_data, data.vectors, heatMap.request_identifier, childHeatmapSvg, child_width, child_height, child_padding, heatmap_tip, scatterplot_tip, 'Summary', true, data.child_identifier);
+
+                // Create scatterplotting button and bind event
+                let childScatterplotButton = d3.select('#child-scatterplot-button').select('button');
+                if (childScatterplotButton) childScatterplotButton.remove();
+                d3.select('#child-scatterplot-button').append('button')
+                    .attr('type', 'button')
+                    .attr('class', 'btn btn-primary')
+                    .html('Scatterplot')
+                    .on('click', () => childHeatMap.drawSelected());
+                });
+        });
 }

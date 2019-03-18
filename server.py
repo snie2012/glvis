@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.manifold import TSNE
 import umap
 import itertools
+import copy
 
 from flask import Flask, jsonify, render_template, request
 
@@ -13,13 +14,13 @@ from hierarchical_clustering import cluster_row_and_col
 from reorder import reorder
 from prepare_draw_data import prepare_heatmap_data
 
-from server_data import ModelData
+from server_data import ModelData, MODEL_KEY_DICT
 
 
 app = Flask(__name__)
 
 counter = itertools.count() # Counter to keep track of each subset request
-data_dict = {} # Dictionary to store all the calculated data for each subset request
+model_dict = {} # Dictionary to store all the calculated data for each subset request
 
 reducers = {
     'tsne': TSNE(n_components=2),
@@ -75,7 +76,9 @@ def serve_dimension_reduction():
     response = request.json
 
     dm_method = response['dm_method']
-    model = data_dict[response['request_identifier']]
+    model = model_dict[response['request_identifier']]
+    if 'child_identifier' in response:
+        model = model.children[int(response['child_identifier'])]
 
     instances = response['instances']
     dimensions = response['dimensions']
@@ -126,7 +129,7 @@ def query_model_data():
 
     # Store the created and filled ModelData object to a dictionary for later use
     request_identifier = str(next(counter))
-    data_dict[request_identifier] = model
+    model_dict[request_identifier] = model
 
     return jsonify(
         request_identifier=request_identifier,
@@ -137,11 +140,41 @@ def query_model_data():
     )
 
 
+# Perform clustering on a subset of dimensions
+@app.route('/query_sub_model', methods=['POST'])
+def query_sub_model():
+    response = request.json
+
+    parent_model = model_dict[response['request_identifier']]
+    sub_model = ModelData(parent_model.model_name)
+
+    parent_model.children.append(sub_model)
+
+    sub_model.has_prediction = parent_model.has_prediction
+    sub_model.preds = parent_model.preds
+
+
+    dimensions = response['dimensions']
+    sub_model.reps = parent_model.reps[:, dimensions]
+    sub_model.cluster_res = cluster_row_and_col(sub_model.reps)
+
+    sub_model.heatmap_data = prepare_heatmap_data(sub_model.reps, sub_model.cluster_res, num_of_rows=ROW_NUM, num_of_cols=COL_NUM)
+
+    # Set reodered data
+    sub_model.reps_reorder = reorder(sub_model.reps, sub_model.cluster_res['row']['new_idx'], sub_model.cluster_res['col']['new_idx'])
+
+    return jsonify(
+        child_identifier=len(parent_model.children) - 1,
+        vectors=sub_model.reps_reorder.tolist(),
+        heatmap_data=sub_model.heatmap_data
+    )
+
+
 @app.route('/heatmap_data', methods=['POST'])
 def heatmap_data():
     response = request.json
     
-    model = data_dict[response['request_identifier']]
+    model = model_dict[response['request_identifier']]
 
     heatmap_data = prepare_heatmap_data(model.reps, model.cluster_res, num_of_rows=int(response['row_num']), num_of_cols=int(response['col_num']))
 

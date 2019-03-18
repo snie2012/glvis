@@ -21,6 +21,7 @@
                             <a class="dropdown-item">glove_6b_100d</a>
                             <a class="dropdown-item">glove_6b_200d</a>
                             <a class="dropdown-item">glove_6b_300d</a>
+                            <a class="dropdown-item">word2vec</a>
                         </div>
                     </div>
                     <input type="text" class="form-control" aria-label="Text input with dropdown button" id='model-name-input'>
@@ -39,10 +40,15 @@
             <div class='row m-1' id='subset-area'></div>
         </div>
 
-        <div class='col-5 border border-secondary rounded mx-2' id='dimension-area'>
+        <div class='col-4 border border-secondary rounded mx-2' id='dimension-area'>
             <div class='row m-1 text-center'>
                 <div class='column m-1 text-center' id='selected-subset-info'></div>
-                <div class='column m-1' id='button-area'>
+            </div>
+
+            <div class='row m-1 text-center'>
+                <div class='column m-1' id='scatterplot-button'>
+                </div>
+                <div class='column m-1' id='submodel-button'>
                 </div>
                 <div class='column m-1'>
                     <div class='dropdown'  id='row-menu'>
@@ -53,12 +59,29 @@
                     </div>
                 </div>
             </div>
+
             <div class='row' id='heatmap-area'></div>
             <div class='row' id='scatterplot-area'></div>
         </div>
 
-        <div class='col-3 border border-secondary rounded'>
-            <div class='row' id='domain-area'></div>
+        <div class='col-4 border border-secondary rounded'>
+
+            <div class='row m-1 text-center'>
+                <div class='column m-1' id='child-scatterplot-button'>
+                </div>
+                <div class='column m-1'>
+                    <div class='dropdown'  id='child-row-menu'>
+                    </div>
+                </div>
+                <div class='column m-1'>
+                    <div class='dropdown'  id='child-col-menu'>
+                    </div>
+                </div>
+            </div>
+
+            <div class='row' id='child-heatmap-area'></div>
+            <div class='row' id='domain-area'>
+            </div>
         </div>
     </div>
     </div>

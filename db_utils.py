@@ -45,6 +45,12 @@ _glove_6b_300d = {
     'has_prediction': False
 }
 
+_word2vec = {
+    'input': 'word',
+    'reps': ['embedding'],
+    'has_prediction': False
+}
+
 DB_KEY_DICT = {
     'bert_mrpc': _bert_mrpc,
     'flair_sentiment': _flair_sentiment,
@@ -52,6 +58,7 @@ DB_KEY_DICT = {
     'glove_6b_100d': _glove_6b_100d,
     'glove_6b_200d': _glove_6b_200d,
     'glove_6b_300d': _glove_6b_300d,
+    'word2vec': _word2vec
 }
 
 

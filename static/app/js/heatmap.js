@@ -5,7 +5,7 @@ import {Scatterplot2D} from './scatterplot2d';
 
 
 class HeatMap {
-    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode) {
+    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode, is_child, child_identifier) {
         this.summary_data = summary_data;
         this.detail_data = detail_data;
         this.request_identifier = request_identifier;
@@ -13,6 +13,8 @@ class HeatMap {
         this.heatmap_tip = heatmap_tip;
         this.scatterplot_tip = scatterplot_tip;
         this.mode = mode;
+        this.is_child = is_child;
+        this.child_identifier = child_identifier;
 
         this.width = width;
         this.height = height;
@@ -191,6 +193,8 @@ class HeatMap {
                     'dm_method': 'umap'
                 }
 
+                if (this.is_child) request_data.child_identifier = this.child_identifier;
+
                 postJson('/dimension_reduction', request_data).then(data => {
                     console.log(data);
                     this.drawScatterplot(data);
@@ -231,47 +235,57 @@ class HeatMap {
         this.scatterplot = new Scatterplot2D(data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
     }
 
-    drawSelected() {
+    getSelected() {
         // Draw scatterplot based on selected rows and columns
-        let selected_instances = [],
-            selected_dimensions = [];
+        this.selected_instances = [];
+        this.selected_dimensions = [];
 
         if (this.row_selected.size == 0 && this.col_selected.size == 0) return;
 
         if (this.row_selected.size == 0) {
             // No row is selected, use all the rows for the selected columns
             this.col_selected.forEach((col_id) => {
-                selected_dimensions.push(this.summary_data[0][col_id].dimensions);
+                this.selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
         } else if (this.col_selected.size == 0) {
             // No column is selected, use all the columns for the selected rows
             this.row_selected.forEach((row_id) => {
-                selected_instances.push(this.summary_data[row_id][0].instances);
+                this.selected_instances.push(this.summary_data[row_id][0].instances);
             })
         } else {
             this.col_selected.forEach((col_id) => {
-                selected_dimensions.push(this.summary_data[0][col_id].dimensions);
+                this.selected_dimensions.push(this.summary_data[0][col_id].dimensions);
             })
 
             this.row_selected.forEach((row_id) => {
-                selected_instances.push(this.summary_data[row_id][0].instances);
+                this.selected_instances.push(this.summary_data[row_id][0].instances);
             })
         }
 
-        console.log('Selected instances: ', selected_instances);
-        console.log('Selected dimensions: ', selected_dimensions);
+        console.log('Selected instances: ', this.selected_instances);
+        console.log('Selected dimensions: ', this.selected_dimensions);
+    }
+
+    drawSelected() {
+        this.getSelected();
 
         const request_data = {
             'request_identifier': this.request_identifier,
-            'instances': _.flatten(selected_instances),
-            'dimensions': _.flatten(selected_dimensions),
+            'instances': _.flatten(this.selected_instances),
+            'dimensions': _.flatten(this.selected_dimensions),
             'dm_method': 'umap'
         }
+
+        if (this.is_child) request_data.child_identifier = this.child_identifier;
 
         postJson('/dimension_reduction', request_data).then(data => {
             console.log(data);
             this.drawScatterplot(data);
         })
+    }
+
+    drawSubModel() {
+
     }
 }
 
