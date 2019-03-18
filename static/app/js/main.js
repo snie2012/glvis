@@ -16,13 +16,22 @@ window.d3_tip = d3_tip;
 
 // Set height for the subset area to support overflow scroll
 d3.select('#subset-area')
-    .style('height', window.innerHeight * 0.9 + 'px')
+    .style('height', window.innerHeight * 0.85 + 'px')
     .style('overflow-y', 'scroll');
 
 // Set height for the domain area to support overflow scroll
 // d3.select('#domain-area')
 //     .style('height', window.innerHeight * 0.9 + 'px')
 //     .style('overflow-y', 'scroll');
+
+let modelName = 'bert_mrpc';
+
+// Bind event to model name selector
+d3.selectAll('#model-name-list a').on('click', function() {
+    modelName = d3.select(this).html();
+    document.getElementById('model-name-input').setAttribute("value", modelName);
+})
+
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
@@ -33,8 +42,8 @@ d3.select('#query-button').on('click', () => {
     // Retrive subset data from a specified endpoint, then visualize the data
     const request_data = {
         'sample_size': sample_size,
-        'model_name': 'bert_mrpc',
-        'db_col_name': 'bert_mrpc'
+        'model_name': modelName,
+        'db_col_name': modelName
     }
     
     postJson('/query_model_data', request_data).then(data => {

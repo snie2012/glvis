@@ -10,6 +10,23 @@
     <div class="container-fluid">
     <div class='row'>
         <div class='col-3 border border-secondary rounded'>
+            <div class='row m-1'>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Model Name</button>
+                        <div class="dropdown-menu" id='model-name-list'>
+                            <a class="dropdown-item">bert_mrpc</a>
+                            <a class="dropdown-item">flair_sentiment</a>
+                            <a class="dropdown-item">glove_6b_50d</a>
+                            <a class="dropdown-item">glove_6b_100d</a>
+                            <a class="dropdown-item">glove_6b_200d</a>
+                            <a class="dropdown-item">glove_6b_300d</a>
+                        </div>
+                    </div>
+                    <input type="text" class="form-control" aria-label="Text input with dropdown button" id='model-name-input'>
+                </div>                     
+            </div>
+        
             <div class='row m-1' id='query-area'>
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" id='query-input' placeholder="Query term" aria-label="Query term" aria-describedby="button-addon2">

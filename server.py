@@ -23,7 +23,7 @@ data_dict = {} # Dictionary to store all the calculated data for each subset req
 
 reducers = {
     'tsne': TSNE(n_components=2),
-    'umap': umap.UMAP(n_components=2, metric='cosine')
+    'umap': umap.UMAP(n_components=2, metric='correlation')
 }
 
 # Default number of row and column clusters
@@ -46,7 +46,10 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
     model.inputs = [item[db_keys['input']] for item in query_result]
     model.reps = np.array([item[db_keys['reps'][0]] for item in query_result])
 
-    model.preds = np.array([item[db_keys['pred']] for item in query_result])
+    # Check whether the model is a prediction/classification model
+    model.has_prediction = db_keys['has_prediction']
+    if model.has_prediction:
+        model.preds = np.array([item[db_keys['pred']] for item in query_result])
 
     # Calculate the statistics for each dimension
     mean = np.mean(model.reps, axis=0)
@@ -72,32 +75,37 @@ def serve_dimension_reduction():
     response = request.json
 
     dm_method = response['dm_method']
-    data = data_dict[response['request_identifier']]
+    model = data_dict[response['request_identifier']]
 
     instances = response['instances']
     dimensions = response['dimensions']
 
     if len(instances) == 0:
-        reps = data.reps[:, dimensions]
+        reps = model.reps[:, dimensions]
     elif len(dimensions) == 0:
-        reps = data.reps[instances, :]
+        reps = model.reps[instances, :]
     else:
-        reps = data.reps[instances, :]
+        reps = model.reps[instances, :]
         reps = reps[:, dimensions]
 
     print(f'Perform dimension reduction on shape: {reps.shape}')
     coords = reducers[dm_method].fit_transform(reps)
 
-    # Process prediction data
-    predictions = data.preds[instances] if instances else data.preds
-    preds = []
-    for elm in predictions:
-        idx = np.argmax(elm)
-        prob = elm[idx] if idx == 1 else -elm[idx]
-        preds.append({'class': int(idx),'prob': float(prob)})
+    # Process prediction data if the model has prediction data
+    if model.has_prediction:
+        predictions = model.preds[instances] if instances else model.preds
+        preds = []
+        for elm in predictions:
+            idx = np.argmax(elm)
+            prob = elm[idx] if idx == 0 else -elm[idx]
+            preds.append({'class': int(idx),'prob': float(prob)})
+
+        response_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
+    else:
+        response_data = [{'coords': coord,'prediction': [0, 1]} for coord in coords.tolist()]
 
     return jsonify(
-        plot_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
+        plot_data = response_data
     )
 
 @app.route('/query_model_data', methods=['POST'])
