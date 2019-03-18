@@ -277,10 +277,6 @@ class HeatMap {
             this.drawScatterplot(data);
         })
     }
-
-    drawSubModel() {
-
-    }
 }
 
 export {HeatMap}
