@@ -5,7 +5,7 @@ import {Scatterplot2D} from './scatterplot2d';
 
 
 class HeatMap {
-    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode, is_child, child_identifier) {
+    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode) {
         this.summary_data = summary_data;
         this.detail_data = detail_data;
         this.request_identifier = request_identifier;
@@ -13,8 +13,6 @@ class HeatMap {
         this.heatmap_tip = heatmap_tip;
         this.scatterplot_tip = scatterplot_tip;
         this.mode = mode;
-        this.is_child = is_child;
-        this.child_identifier = child_identifier;
 
         this.width = width;
         this.height = height;
@@ -193,8 +191,6 @@ class HeatMap {
                     'dm_method': 'umap'
                 }
 
-                if (this.is_child) request_data.child_identifier = this.child_identifier;
-
                 postJson('/dimension_reduction', request_data).then(data => {
                     console.log(data);
                     this.drawScatterplot(data);
@@ -275,8 +271,6 @@ class HeatMap {
             'dimensions': _.flatten(this.selected_dimensions),
             'dm_method': 'umap'
         }
-
-        if (this.is_child) request_data.child_identifier = this.child_identifier;
 
         postJson('/dimension_reduction', request_data).then(data => {
             console.log(data);

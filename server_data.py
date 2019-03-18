@@ -45,6 +45,5 @@ MODEL_KEY_DICT = {
 class ModelData:
     def __init__(self, model_name):
         self.model_name = model_name
-        self.children = []
         for key in MODEL_KEY_DICT[model_name]:
             self.key = None
