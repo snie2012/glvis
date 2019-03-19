@@ -7,61 +7,37 @@
     <title><%= htmlWebpackPlugin.options.title %></title>
 </head>
 <body>
-    <div class="container-fluid">
+<div class="container-fluid" id='container'>
     <div class='row'>
-        <div class='col-3 border border-secondary rounded'>
-            <div class='row m-1'>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Model Name</button>
-                        <div class="dropdown-menu" id='model-name-list'>
-                            <a class="dropdown-item">bert_mrpc</a>
-                            <a class="dropdown-item">flair_sentiment</a>
-                            <a class="dropdown-item">glove_6b_50d</a>
-                            <a class="dropdown-item">glove_6b_100d</a>
-                            <a class="dropdown-item">glove_6b_200d</a>
-                            <a class="dropdown-item">glove_6b_300d</a>
-                            <a class="dropdown-item">word2vec</a>
-                        </div>
-                    </div>
-                    <input type="text" class="form-control" aria-label="Text input with dropdown button" id='model-name-input'>
-                </div>                     
-            </div>
-        
-            <div class='row m-1' id='query-area'>
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id='query-input' placeholder="Query term" aria-label="Query term" aria-describedby="button-addon2">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" id="query-button">Query</button>
+        <div class='col-3 m-1'>
+            <div class="input-group mb-1">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Model Name</button>
+                    <div class="dropdown-menu" id='model-name-list'>
+                        <a class="dropdown-item">bert_mrpc</a>
+                        <a class="dropdown-item">flair_sentiment</a>
+                        <a class="dropdown-item">glove_6b_50d</a>
+                        <a class="dropdown-item">glove_6b_100d</a>
+                        <a class="dropdown-item">glove_6b_200d</a>
+                        <a class="dropdown-item">glove_6b_300d</a>
+                        <a class="dropdown-item">word2vec</a>
                     </div>
                 </div>
+                <input type="text" class="form-control" aria-label="Text input with dropdown button" id='model-name-input'>             
             </div>
-
-            <div class='row m-1' id='subset-area'></div>
         </div>
-
-        <div class='col-5 border border-secondary rounded mx-2' id='dimension-area'>
-            <div class='row m-1 text-center'>
-                <div class='column m-1 text-center' id='selected-subset-info'></div>
-                <div class='column m-1' id='button-area'>
-                </div>
-                <div class='column m-1'>
-                    <div class='dropdown'  id='row-menu'>
-                    </div>
-                </div>
-                <div class='column m-1'>
-                    <div class='dropdown'  id='col-menu'>
-                    </div>
+    
+        <div class='col-2 m-1' id='query-area'>
+            <div class="input-group mb-1">
+                <input type="text" class="form-control" id='query-input' placeholder="Query term" aria-label="Query term" aria-describedby="button-addon2">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="query-button">Query</button>
                 </div>
             </div>
-            <div class='row' id='heatmap-area'></div>
-            <div class='row' id='scatterplot-area'></div>
-        </div>
-
-        <div class='col-3 border border-secondary rounded'>
-            <div class='row' id='domain-area'></div>
         </div>
     </div>
-    </div>
+
+    <div class='row border border-secondary rounded' id='canvas'></div>
+</div>
 </body>
 </html>

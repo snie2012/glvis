@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import d3_tip from "d3-tip";
 import 'bootstrap';
 
+import {createDropdownInput} from "./ui_helper";
 import {postJson} from "./util";
 
 import {WordCloud} from "./wordcloud";
@@ -14,9 +15,9 @@ import {HeatMap} from './heatmap';
 window.d3 = d3;
 window.d3_tip = d3_tip;
 
-// Set height for the subset area to support overflow scroll
-d3.select('#subset-area')
-    .style('height', window.innerHeight * 0.85 + 'px')
+// Set height for the canvas area to support overflow scroll
+d3.select('#canvas')
+    .style('height', window.innerHeight * 0.90 + 'px')
     .style('overflow-y', 'scroll');
 
 // Set height for the domain area to support overflow scroll
@@ -24,74 +25,80 @@ d3.select('#subset-area')
 //     .style('height', window.innerHeight * 0.9 + 'px')
 //     .style('overflow-y', 'scroll');
 
-let modelName = 'bert_mrpc';
+// Set default values for model and query term
+let model_name = 'bert_mrpc';
+d3.select('#model-name-input').attr("value", model_name);
+d3.select('#query-input').attr("value", 100);
 
 // Bind event to model name selector
 d3.selectAll('#model-name-list a').on('click', function() {
-    modelName = d3.select(this).html();
-    document.getElementById('model-name-input').setAttribute("value", modelName);
+    model_name = d3.select(this).html();
+    d3.select('#model-name-input').attr("value", model_name);
 })
 
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
-    const sample_size = document.getElementById('query-input').value;
+    const sample_size = d3.select('#query-input').attr('value');
     if (!sample_size) return;
     console.log('Sample size: ', sample_size);
     
     // Retrive subset data from a specified endpoint, then visualize the data
     const request_data = {
         'sample_size': sample_size,
-        'model_name': modelName,
-        'db_col_name': modelName
+        'model_name': model_name,
+        'db_col_name': model_name
     }
     
     postJson('/query_model_data', request_data).then(data => {
         console.log(data);
-        subsetArea(sample_size, data);
+        let newRow = createRow();
+        subsetArea(newRow.summary_div, sample_size, data);
+        dimensionArea(newRow.row_div, newRow.dimension_div, data);
     })
 })
 
-// Designate the previously selected row
-let preSelected;
 
-// Logic for the histogram area
-// Create a row for each query
-function subsetArea(term, data) {
-    let subsetRow = d3.select('#subset-area')
-        .append('div')
-        .attr('class', 'row m-1 border-bottom border-secondary');
+function createRow() {
+    let rowDiv = d3.select('#canvas').append('div')
+        .attr('class', 'row border-bottom border-secondary')
+        .style('width', `${window.innerWidth * 0.99}px`)
+        .style('height', `${500}px`);
+    let summaryDiv = rowDiv.append('div').attr('class', 'col-2 ml-1 pr-0');
+    let dimensionDiv = rowDiv.append('div').attr('class', 'col-4 ml-1 p-0');
+    return {
+        'row_div': rowDiv,
+        'summary_div': summaryDiv, 
+        'dimension_div': dimensionDiv
+    };
+}
 
-    // Bind mouse events to subsetRow to facilitte browsing
-    subsetRow.on('mouseenter', function() {
-        d3.select(this).attr('class', 'row m-1 border border-primary');
-    })
 
-    subsetRow.on('mouseleave', function() {
-        d3.select(this).attr('class', 'row m-1 border-bottom border-secondary');
-    })
+function subsetArea(parentDiv, term, data) {
+    // Create rows to display the query info
+    parentDiv.append('div')
+        .attr('class', 'row ml-1 p-0 text-center')
+        .html(`Model name: <b>${model_name}</b>`);
+        
+    parentDiv.append('div')
+        .attr('class', 'row ml-1 p-0 text-center')
+        .html(`Query term: <b>${term}</b>`);
 
-    // Create a row in subsetRow to display the query term
-    let termRow = subsetRow.append('div')
-        .attr('class', 'row m-1 text-center')
-        .style('width', subsetRow.node().parentElement.clientWidth * 0.8 + 'px')
-        .html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
+    parentDiv.append('div')
+        .attr('class', 'row ml-1 p-0 text-center')
+        .html(`Number of instances: <b>${data.sentences.length}</b>`);
 
-    // Create a row subsetRow to host histograms
-    let histRow = subsetRow.append('div')
-                    .attr('class', 'row m-1');
-
-    // Create columns inside the row, one column for one histogram
-    let meanCol = histRow.append('div').attr('class', 'col p-1 ');
-    let stdCol = histRow.append('div').attr('class', 'col p-1');
+    // Create rows for histograms
+    let meanRow = parentDiv.append('div').attr('class', 'row m-1 p-0 ');
+    let stdRow = parentDiv.append('div').attr('class', 'row m-1 p-0');
 
     // Set the width and height for each histogram
-    const width = histRow.node().parentElement.clientWidth * 0.5, 
-          height = 200;
+    const width = parentDiv.node().clientWidth * 0.9, 
+          height = parentDiv.node().clientHeight * 0.4;
 
     // Create a svg for the histogram of mean values
     // and use it to plot histogram for mean values
-    let meanSvg = meanCol.append('svg')
+    let meanSvg = meanRow.append('svg')
         .attr('width', width)
         .attr('height', height);
 
@@ -99,50 +106,14 @@ function subsetArea(term, data) {
 
     // Create a svg for the histogram of std values
     // and use it to plot histogram for std values
-    let stdSvg = stdCol.append('svg')
+    let stdSvg = stdRow.append('svg')
         .attr('width', width)
         .attr('height', height);
 
     let stdHist = new Histogram(data.stats.map(d => d.std), stdSvg, width, height, '#fdc086');
-
-
-    // Bind click event to subsetRow to trigger the plot of Scatterplot1D
-    subsetRow.on('click', function() {
-        let curSelected = d3.select(this);
-
-        // Prevent repetative click on the same row
-        if (preSelected && preSelected.node() == curSelected.node()) return;
-
-        // Recover the preselected row to its unselected state
-        if (preSelected) {
-            preSelected.attr('class', 'row m-1 border-bottom border-secondary');
-
-            preSelected.on('mouseenter', function() {
-                d3.select(this).attr('class', 'row m-1 border border-primary');
-            });
-
-            preSelected.on('mouseleave', function() {
-                d3.select(this).attr('class', 'row m-1 border-bottom border-secondary');
-            });
-        }
-
-        // Set the current row to the selected state
-        curSelected.attr('class', 'row m-1 border border-danger');
-        curSelected.on('mouseenter', null);
-        curSelected.on('mouseleave', null);
-
-        // Set the new preselected row
-        preSelected = curSelected;
-
-        // Draw 1D-scatterplots for the currently selected subset
-        dimensionArea(term, data);
-    })
 }
 
-
-// Designate the area to draw dimensions
-let heatmapDrawArea;
-let scatterplotButton;
+// Set up constants for the dimension area
 const RowNum = 2, ColNum = 3;
 let curRowNum = RowNum, curColNum = ColNum;
 const maxClusterNum = 31;
@@ -150,28 +121,62 @@ const maxClusterNum = 31;
 // Tooltip for heatmap
 let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
 let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { 
-    return "prediction: " + d.prediction['class'] + '</br>' + 'probability: ' + d.prediction['prob']; 
+    return `prediction: ${d.prediction['class']}<br>probability: ${d.prediction['prob']}`; 
 });
 
-function dimensionArea(term, data) {
-    // Show selected subset's information
-    let infoRow = d3.select('#selected-subset-info');
+function dimensionArea(parentRow, parentDiv, data) {
+    // 1. Create row for controller items
+    let controllerDiv = parentDiv.append('div')
+        .attr('class', 'row m-1 p-0');
+    
+    // 2. Create dropdown lists to control the number of clusters of the heatmap
+    let rowDiv = controllerDiv.append('div')
+        .attr('class', 'col');
+    
+    let rowMenu = createDropdownInput(rowDiv);
+    rowMenu.button.html('Rows');
 
-    infoRow.html('Query term: <b>' + term + '</b>.  Number of instances: <b>' + data.sentences.length + '</b>');
+    const rowNum = data.vectors.length < maxClusterNum ? data.vectors.length : maxClusterNum;
+    let rowItems = rowMenu.dropdown.selectAll('a')
+        .data(d3.range(2, rowNum, 1))
+        .enter()
+        .append('a')
+        .attr('class', 'dropdown-item')
+        .html(d => d);
+    
+    let colDiv = controllerDiv.append('div')
+        .attr('class', 'col');
+    
+    let colMenu = createDropdownInput(colDiv);
+    colMenu.button.html('Columns');
+    
+    const colNum = data.vectors[0].length < maxClusterNum ? data.vectors[0].length : maxClusterNum;
+    let colItems = colMenu.dropdown.selectAll('a')
+        .data(d3.range(2, colNum, 1))
+        .enter()
+        .append('a')
+        .attr('class', 'dropdown-item')
+        .html(d => d);
 
-    // Draw heatmap for the selected subset
+    // 3. Create button to draw scatterplot
+    let scpButton = controllerDiv.append('div')
+        .attr('class', 'col')
+        .append('button')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-outline-primary btn-sm')
+        .html('Scatterplot');
+
+    // 4. Draw heatmap for the selected subset
 
     // Clear dimension draw area if it already exists
     // Set height for the dimension area to support overflow scroll
-    if (heatmapDrawArea) heatmapDrawArea.remove();
-    heatmapDrawArea = d3.select('#heatmap-area')
-        .append('div')
-        .attr('class', 'row m-1')
+    let heatmapDrawArea = parentDiv.append('div')
+        .attr('class', 'row ml-1 p-0')
         .style('height', window.innerHeight * 0.45 + 'px');
 
     // width, height and padding for scatterplot svg
-    const width = heatmapDrawArea.node().parentElement.clientWidth - 50, 
-          height = heatmapDrawArea.node().parentElement.clientHeight * 0.85; 
+    const width = heatmapDrawArea.node().parentElement.clientWidth - 100, 
+          height = heatmapDrawArea.node().parentElement.clientHeight - 100; 
     const padding = 20;
 
     let heatmapSvg = heatmapDrawArea.append('svg')
@@ -179,102 +184,52 @@ function dimensionArea(term, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary');
+    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary', parentRow);
 
+    // Bind event to scatterplot button
+    scpButton.on('click', () => heatMap.drawSelected());
 
-    // Pop information to row and column cluster dropdown menus
-
-    // First reset rowNum and colNum
+    // Bind event to dropdown menus
+    // first reset rowNum and colNum
     curRowNum = RowNum;
     curColNum = ColNum;
 
-    let rowMenu = d3.select('#row-menu');
-    
-    let rowButton = rowMenu.select('button');
-    if (rowButton) rowButton.remove();
-    rowMenu.append('button')
-        .attr('class', 'btn btn-secondary dropdown-toggle')
-        .attr('type', 'button')
-        .attr('id', 'dropdownMenuButton')
-        .attr('data-toggle', 'dropdown')
-        .attr('aria-haspopup', 'true')
-        .attr('aria-expanded', 'false')
-        .html('Rows');
+    rowMenu.input.attr('value', curRowNum);
+    colMenu.input.attr('value', curColNum);
 
-    let rowDropDown = rowMenu.select('div');
-    if (rowDropDown) rowDropDown.remove();
-    rowDropDown = rowMenu.append('div')
-        .attr('class', 'dropdown-menu')
-        .attr('aria-labelledby', 'dropdownMenuButton');
-    const rowNum = data.vectors.length < maxClusterNum ? data.vectors.length : maxClusterNum;
-    for (let i = 2; i < rowNum; i++) {
-        rowDropDown.append('a')
-            .attr('class', 'dropdown-item')
-            .html(i)
-            .on('click', function() {
-                if (i == curRowNum) return; // Ignore if the same row is selected
-                curRowNum = i;
+    rowItems.on('click', (d) => {
+        if (d == curRowNum) return; // Ignore if the same row is selected
+        curRowNum = d;
+        rowMenu.input.attr('value', curRowNum);
 
-                // Request new heatmap data and redraw the corresponding heatmap
-                const request_data = {
-                    'request_identifier': heatMap.request_identifier,
-                    'row_num': curRowNum,
-                    'col_num': curColNum
-                }
-                
-                postJson('/heatmap_data', request_data).then(data => {
-                    heatMap.summary_data = data.heatmap_data;
-                    heatMap.reDraw();
-                })
-            });
-    }
+        // Request new heatmap data and redraw the corresponding heatmap
+        const request_data = {
+            'request_identifier': heatMap.request_identifier,
+            'row_num': curRowNum,
+            'col_num': curColNum
+        }
+        
+        postJson('/heatmap_data', request_data).then(data => {
+            heatMap.summary_data = data.heatmap_data;
+            heatMap.reDraw();
+        })
+    });
 
-    let colMenu = d3.select('#col-menu');
+    colItems.on('click', (d) => {
+        if (d == curColNum) return; // Ignore if the same column is selected
+        curColNum = d;
+        colMenu.input.attr('value', curColNum);
 
-    let colButton = colMenu.select('button');
-    if (colButton) colButton.remove();
-    colMenu.append('button')
-        .attr('class', 'btn btn-secondary dropdown-toggle')
-        .attr('type', 'button')
-        .attr('id', 'dropdownMenuButton')
-        .attr('data-toggle', 'dropdown')
-        .attr('aria-haspopup', 'true')
-        .attr('aria-expanded', 'false')
-        .html('Columns');
+        // Request new heatmap data and redraw the corresponding heatmap
+        const request_data = {
+            'request_identifier': heatMap.request_identifier,
+            'row_num': curRowNum,
+            'col_num': curColNum
+        }
 
-    let colDropDown = colMenu.select('div');
-    if (colDropDown) colDropDown.remove();
-    colDropDown = colMenu.append('div')
-        .attr('class', 'dropdown-menu')
-        .attr('aria-labelledby', 'dropdownMenuButton');
-    const colNum = data.vectors[0].length < maxClusterNum ? data.vectors[0].length : maxClusterNum;
-    for (let i = 2; i < colNum; i++) {
-        colDropDown.append('a')
-            .attr('class', 'dropdown-item')
-            .html(i)
-            .on('click', function() {
-                if (i == curColNum) return; // Ignore if the same column is selected
-                curColNum = i;
-
-                // Request new heatmap data and redraw the corresponding heatmap
-                const request_data = {
-                    'request_identifier': heatMap.request_identifier,
-                    'row_num': curRowNum,
-                    'col_num': curColNum
-                }
-
-                postJson('/heatmap_data', request_data).then(data => {
-                    heatMap.summary_data = data.heatmap_data;
-                    heatMap.reDraw();
-                })
-            });
-    }
-
-    // Create scatterplotting button and bind event
-    if (scatterplotButton) scatterplotButton.remove();
-    scatterplotButton = d3.select('#button-area').append('button')
-        .attr('type', 'button')
-        .attr('class', 'btn btn-primary')
-        .html('Scatterplot')
-        .on('click', () => heatMap.drawSelected());
+        postJson('/heatmap_data', request_data).then(data => {
+            heatMap.summary_data = data.heatmap_data;
+            heatMap.reDraw();
+        })
+    });
 }

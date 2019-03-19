@@ -5,7 +5,7 @@ import {Scatterplot2D} from './scatterplot2d';
 
 
 class HeatMap {
-    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode) {
+    constructor(summary_data, detail_data, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, mode, row_div) {
         this.summary_data = summary_data;
         this.detail_data = detail_data;
         this.request_identifier = request_identifier;
@@ -13,6 +13,7 @@ class HeatMap {
         this.heatmap_tip = heatmap_tip;
         this.scatterplot_tip = scatterplot_tip;
         this.mode = mode;
+        this.row_div = row_div;
 
         this.width = width;
         this.height = height;
@@ -207,21 +208,20 @@ class HeatMap {
             this.transform_group.attr('transform', d3.event.transform);
         }); 
         
-        this.svg.call(zoom);
+        this.transform_group.call(zoom);
     }
 
     drawScatterplot(data) {
-        let scatterplotRow = d3.select('#scatterplot2d');
+        let scatterplotRow = this.row_div.select('#scatterplot2d');
         if (scatterplotRow) scatterplotRow.remove();
 
-        scatterplotRow = d3.select('#scatterplot-area')
+        scatterplotRow = this.row_div
             .append('div')
-            .attr('class', 'row m-1')
-            .attr('id', 'scatterplot2d')
-            .style('height', window.innerHeight * 0.45 + 'px');
+            .attr('class', 'col-3 ml-1 p-0')
+            .attr('id', 'scatterplot2d');
         
-        const width = scatterplotRow.node().parentElement.clientWidth, 
-              height = scatterplotRow.node().parentElement.clientHeight * 0.95, 
+        const width = scatterplotRow.node().clientWidth, 
+              height = scatterplotRow.node().clientHeight, 
               padding = 30;
         let scatterplotSvg = scatterplotRow.append('svg')
             .attr('width', width)
@@ -264,6 +264,8 @@ class HeatMap {
 
     drawSelected() {
         this.getSelected();
+
+        if (this.selected_dimensions.length == 0 && this.selected_instances.length == 0) return;
 
         const request_data = {
             'request_identifier': this.request_identifier,
