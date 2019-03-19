@@ -10,7 +10,6 @@ from db_utils import query_sentiment_model, random_sample, DB_KEY_DICT
 from clean_text import clean_text, remove_tags
 
 from hierarchical_clustering import cluster_row_and_col
-from reorder import reorder
 from prepare_draw_data import prepare_heatmap_data
 
 from server_data import ModelData
@@ -46,10 +45,17 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
     model.inputs = [item[db_keys['input']] for item in query_result]
     model.reps = np.array([item[db_keys['reps'][0]] for item in query_result])
 
-    # Check whether the model is a prediction/classification model
-    model.has_prediction = db_keys['has_prediction']
-    if model.has_prediction:
+    # Check whether the model's tag_type (prediction, binary, multiclass)
+    model.tag_type = db_keys['tag_type']
+    if model.tag_type == 'no_tag':
+        pass
+    if model.tag_type == 'binary':
         model.preds = np.array([item[db_keys['pred']] for item in query_result])
+    elif model.tag_type == 'multiclass':
+        model.preds = np.array([item[db_keys['pred']] for item in query_result])
+        model.tag_dict = db_keys['tag_dict']
+    else:
+        raise Exception()
 
     # Calculate the statistics for each dimension
     mean = np.mean(model.reps, axis=0)
@@ -63,12 +69,7 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
 
     model.heatmap_data = prepare_heatmap_data(model.reps, model.cluster_res, num_of_rows=ROW_NUM, num_of_cols=COL_NUM)
 
-    # Set reodered data
-    model.reps_reorder = reorder(model.reps, model.cluster_res['row']['new_idx'], model.cluster_res['col']['new_idx'])
-
     return model
-
-
 
 @app.route('/dimension_reduction', methods=['POST'])
 def serve_dimension_reduction():
@@ -82,6 +83,10 @@ def serve_dimension_reduction():
 
     if len(instances) == 0:
         reps = model.reps[:, dimensions]
+        # random_dims = np.random.choice(model.reps.shape[1], len(dimensions), replace=False)
+        # random_dims.sort()
+        # print(random_dims)
+        # reps = model.reps[:, random_dims]
     elif len(dimensions) == 0:
         reps = model.reps[instances, :]
     else:
@@ -92,20 +97,27 @@ def serve_dimension_reduction():
     coords = reducers[dm_method].fit_transform(reps)
 
     # Process prediction data if the model has prediction data
-    if model.has_prediction:
+    if model.tag_type == 'no_tag':
+        response_data = [{'coords': coord} for coord in coords.tolist()]
+    if model.tag_type == 'binary':
         predictions = model.preds[instances] if instances else model.preds
         preds = []
         for elm in predictions:
             idx = np.argmax(elm)
             prob = elm[idx] if idx == 0 else -elm[idx]
             preds.append({'class': int(idx),'prob': float(prob)})
+        response_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
+    elif model.tag_type == 'multiclass':
+        predictions = model.preds[instances] if instances else model.preds
+        preds = [model.tag_dict[tag] for tag in predictions]
 
         response_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
     else:
-        response_data = [{'coords': coord,'prediction': [0, 1]} for coord in coords.tolist()]
+        raise Exception()
 
     return jsonify(
-        plot_data = response_data
+        tag_type=model.tag_type,
+        plot_data=response_data
     )
 
 @app.route('/query_model_data', methods=['POST'])
@@ -131,7 +143,7 @@ def query_model_data():
     return jsonify(
         request_identifier=request_identifier,
         sentences=model.inputs,
-        vectors=model.reps_reorder.tolist(),
+        vectors=model.reps.tolist(),
         stats=model.stats,
         heatmap_data=model.heatmap_data
     )

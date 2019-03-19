@@ -27,21 +27,22 @@ d3.select('#canvas')
 
 // Set default values for model and query term
 let model_name = 'bert_mrpc';
-d3.select('#model-name-input').attr("value", model_name);
-d3.select('#query-input').attr("value", 100);
+d3.select('#model-name-input').property("value", model_name);
+d3.select('#query-input').property("value", 100);
 
 // Bind event to model name selector
 d3.selectAll('#model-name-list a').on('click', function() {
     model_name = d3.select(this).html();
-    d3.select('#model-name-input').attr("value", model_name);
+    d3.select('#model-name-input').property("value", model_name);
 })
 
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
-    const sample_size = d3.select('#query-input').attr('value');
+    const sample_size = d3.select('#query-input').property('value');
     if (!sample_size) return;
-    console.log('Sample size: ', sample_size);
+    console.log(`Model name: ${model_name}`);
+    console.log(`Sample size: ${sample_size}`);
     
     // Retrive subset data from a specified endpoint, then visualize the data
     const request_data = {
@@ -79,7 +80,7 @@ function subsetArea(parentDiv, term, data) {
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')
         .html(`Model name: <b>${model_name}</b>`);
-        
+
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')
         .html(`Query term: <b>${term}</b>`);

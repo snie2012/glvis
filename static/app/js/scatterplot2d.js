@@ -1,7 +1,8 @@
 import * as d3 from "d3";
 
 class Scatterplot2D {
-    constructor(data, svg, w, h, padding, tip) {
+    constructor(tag_type, data, svg, w, h, padding, tip) {
+        this.tag_type = tag_type;
         this.data = data;
         this.svg = svg;
         this.w = w;
@@ -24,16 +25,21 @@ class Scatterplot2D {
         this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
 
         // Define color scale
-        let divergingScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+        let colorScale;
+        if (this.tag_type == 'binary') {
+            colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+        } else if (this.tag_type == 'multiclass') {
+            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        }
 
         // Bind brush events before the creation of groups and circles to allow tooltip to show
         this.bindBrush();
 
         // Define transform group
-        let transformGroup = svg.append('g')
+        this.transformGroup = svg.append('g')
             .attr('transform', `translate(${5}, ${0})`)
 
-        this.group = transformGroup.append('g')
+        this.group = this.transformGroup.append('g')
                 // .attr('transform', `translate(${0}, ${0})`)
                 .attr('width', [padding, w - padding])
                 .attr('height', [h-padding, padding]);
@@ -45,20 +51,29 @@ class Scatterplot2D {
             .attr("cx", d => this.xScale(d.coords[0]))
             .attr("cy", d => h - this.yScale(d.coords[1]))
             .attr("r", 4)
-            .attr("fill", d => divergingScale(d.prediction['prob']))
+            .attr("fill", (d) => {
+                if (this.tag_type == 'binary') {
+                    return colorScale(d.prediction['prob'])
+                } else if (this.tag_type == 'multiclass') {
+                    return colorScale(d.prediction);
+                } else if (this.tag_type == 'no_tag') {
+                    return '#beaed4';
+                }
+                    
+            })
             // .style("stroke", 'black')
             // .attr("stroke-width", 0.1)
             .on('mouseover.tip', tip.show)
             .on('mouseout.tip', tip.hide);
 
         //X axis
-        this.gX = transformGroup.append("g")
+        this.gX = this.transformGroup.append("g")
             .attr("class", "x axis")	
             .attr("transform", "translate(0," + (h - padding + 6) + ")")
             .call(this.xAxis);
 
         //Y axis
-        this.gY = transformGroup.append("g")
+        this.gY = this.transformGroup.append("g")
             .attr("class", "y axis")	
             .attr("transform", "translate(" + (padding - 6) + ", 0)")
             .call(this.yAxis);
@@ -95,7 +110,7 @@ class Scatterplot2D {
         let brush = d3.brush()
             .extent([[0, 0], [this.w, this.h]])
             .on('start', () => {
-                d3.select("#scatterplot2d svg g.brush").raise();
+                this.svg.select("g.brush").raise();
             })
             .on("brush end", this.brushEnd.bind(this));
 

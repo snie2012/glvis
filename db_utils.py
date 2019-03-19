@@ -11,44 +11,52 @@ _bert_mrpc = {
     'input': 'sentence',
     'reps': ['cls_token', 'reduce_mean'],
     'pred': 'prediction',
-    'has_prediction': True
+    'tag_type': 'binary'
 }
 
 _flair_sentiment = {
     'input': 'sentence',
     'reps': ['val'],
     'pred': 'prediction',
-    'has_prediction': True
+    'tag_type': 'binary'
 }
 
 _glove_6b_50d = {
     'input': 'word',
     'reps': ['embedding'],
-    'has_prediction': False
+    'tag_type': 'no_tag'
 }
 
 _glove_6b_100d = {
     'input': 'word',
     'reps': ['embedding'],
-    'has_prediction': False
+    'tag_type': 'no_tag'
 }
 
 _glove_6b_200d = {
     'input': 'word',
     'reps': ['embedding'],
-    'has_prediction': False
+    'tag_type': 'no_tag'
 }
 
 _glove_6b_300d = {
     'input': 'word',
     'reps': ['embedding'],
-    'has_prediction': False
+    'tag_type': 'no_tag'
 }
 
 _word2vec = {
     'input': 'word',
     'reps': ['embedding'],
-    'has_prediction': False
+    'tag_type': 'no_tag'
+}
+
+_flair_ner = {
+    'input': 'text',
+    'reps': ['linear_layer_state'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate(['LOC', 'MISC', 'ORG', 'PER'])}
 }
 
 DB_KEY_DICT = {
@@ -58,7 +66,8 @@ DB_KEY_DICT = {
     'glove_6b_100d': _glove_6b_100d,
     'glove_6b_200d': _glove_6b_200d,
     'glove_6b_300d': _glove_6b_300d,
-    'word2vec': _word2vec
+    'word2vec': _word2vec,
+    'flair_ner': _flair_ner
 }
 
 

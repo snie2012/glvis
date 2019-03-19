@@ -208,7 +208,7 @@ class HeatMap {
             this.transform_group.attr('transform', d3.event.transform);
         }); 
         
-        this.transform_group.call(zoom);
+        this.svg.call(zoom);
     }
 
     drawScatterplot(data) {
@@ -228,7 +228,7 @@ class HeatMap {
             .attr('height', height)
             .call(this.scatterplot_tip);
 
-        this.scatterplot = new Scatterplot2D(data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
+        this.scatterplot = new Scatterplot2D(data.tag_type, data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
     }
 
     getSelected() {
