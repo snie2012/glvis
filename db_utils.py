@@ -59,6 +59,84 @@ _flair_ner = {
     'tag_dict': {tag: i for i, tag in enumerate(['LOC', 'MISC', 'ORG', 'PER'])}
 }
 
+_flair_pos = {
+    'input': 'text',
+    'reps': ['linear_layer_state'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate([
+        '$',
+        "''",
+        ',',
+        '-LRB-',
+        '-RRB-',
+        '.',
+        ':',
+        'ADD',
+        'AFX',
+        'CC',
+        'CD',
+        'DT',
+        'EX',
+        'FW',
+        'HYPH',
+        'IN',
+        'JJ',
+        'JJR',
+        'JJS',
+        'LS',
+        'MD',
+        'NFP',
+        'NN',
+        'NNP',
+        'NNPS',
+        'NNS',
+        'PDT',
+        'POS',
+        'PRP',
+        'PRP$',
+        'RB',
+        'RBR',
+        'RBS',
+        'RP',
+        'SYM',
+        'TO',
+        'UH',
+        'VB',
+        'VBD',
+        'VBG',
+        'VBN',
+        'VBP',
+        'VBZ',
+        'WDT',
+        'WP',
+        'WP$',
+        'WRB',
+        'XX',
+        '``'
+    ])}
+}
+
+_flair_chunk = {
+    'input': 'text',
+    'reps': ['linear_layer_state'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate([
+        'VP',
+        'CONJP',
+        'PRT',
+        'ADVP',
+        'UCP',
+        'SBAR',
+        'NP',
+        'LST',
+        'PP',
+        'INTJ',
+        'ADJP'
+    ])}
+}
+
 DB_KEY_DICT = {
     'bert_mrpc': _bert_mrpc,
     'flair_sentiment': _flair_sentiment,
@@ -67,7 +145,9 @@ DB_KEY_DICT = {
     'glove_6b_200d': _glove_6b_200d,
     'glove_6b_300d': _glove_6b_300d,
     'word2vec': _word2vec,
-    'flair_ner': _flair_ner
+    'flair_ner': _flair_ner,
+    'flair_pos': _flair_pos,
+    'flair_chunk': _flair_chunk
 }
 
 

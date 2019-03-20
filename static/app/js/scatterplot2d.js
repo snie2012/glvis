@@ -159,6 +159,21 @@ class Scatterplot2D {
         // if (selectedElms.length == 0) return;
 
         // Plot domain visualizations with selected elements
+        // let scatterplotRow = this.row_div.select('#scatterplot2d');
+        // if (!scatterplotRow) scatterplotRow.remove();
+
+        // scatterplotRow = this.row_div
+        //     .append('div')
+        //     .attr('class', 'col-3 ml-1 p-0')
+        //     .attr('id', 'domain');
+        
+        // const width = scatterplotRow.node().clientWidth, 
+        //       height = scatterplotRow.node().clientHeight, 
+        //       padding = 30;
+        // let scatterplotSvg = scatterplotRow.append('svg')
+        //     .attr('width', width)
+        //     .attr('height', height)
+        //     .call(this.scatterplot_tip);
         
     }
 }
