@@ -42,14 +42,14 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
     model = ModelData(model_name)
     db_keys = DB_KEY_DICT[model_name]
 
-    model.inputs = [item[db_keys['input']] for item in query_result]
+    model.inputs = np.array([item[db_keys['input']] for item in query_result])
     model.reps = np.array([item[db_keys['reps'][0]] for item in query_result])
 
     # Check whether the model's tag_type (prediction, binary, multiclass)
     model.tag_type = db_keys['tag_type']
     if model.tag_type == 'no_tag':
         pass
-    if model.tag_type == 'binary':
+    elif model.tag_type == 'binary':
         model.preds = np.array([item[db_keys['pred']] for item in query_result])
     elif model.tag_type == 'multiclass':
         model.preds = np.array([item[db_keys['pred']] for item in query_result])
@@ -82,6 +82,7 @@ def serve_dimension_reduction():
     dimensions = response['dimensions']
 
     if len(instances) == 0:
+        instances = list(range(len(model.inputs)))
         reps = model.reps[:, dimensions]
         # random_dims = np.random.choice(model.reps.shape[1], len(dimensions), replace=False)
         # random_dims.sort()
@@ -96,22 +97,26 @@ def serve_dimension_reduction():
     print(f'Perform dimension reduction on shape: {reps.shape}')
     coords = reducers[dm_method].fit_transform(reps)
 
+    input_data = model.inputs[instances]
+
     # Process prediction data if the model has prediction data
     if model.tag_type == 'no_tag':
-        response_data = [{'coords': coord} for coord in coords.tolist()]
-    if model.tag_type == 'binary':
-        predictions = model.preds[instances] if instances else model.preds
+        response_data = [
+            {'coords': coord, 'input': input_d} for coord, input_d in zip(coords.tolist(), input_data)
+        ]
+    elif model.tag_type == 'binary':
+        predictions = model.preds[instances]
         preds = []
         for elm in predictions:
             idx = np.argmax(elm)
             prob = elm[idx] if idx == 0 else -elm[idx]
             preds.append({'class': int(idx),'prob': float(prob)})
-        response_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
+        response_data = [{'coords': coord, 'prediction': pred, 'input': input_d} for coord, pred, input_d in zip(coords.tolist(), preds, input_data)]
     elif model.tag_type == 'multiclass':
-        predictions = model.preds[instances] if instances else model.preds
+        predictions = model.preds[instances]
         preds = [model.tag_dict[tag] for tag in predictions]
 
-        response_data = [{'coords': coord,'prediction': pred} for coord, pred in zip(coords.tolist(), preds)]
+        response_data = [{'coords': coord, 'prediction': pred, 'input':input_d, 'tag': tag} for coord, pred, input_d, tag in zip(coords.tolist(), preds, input_data, predictions)]
     else:
         raise Exception()
 
@@ -142,7 +147,6 @@ def query_model_data():
 
     return jsonify(
         request_identifier=request_identifier,
-        sentences=model.inputs,
         vectors=model.reps.tolist(),
         stats=model.stats,
         heatmap_data=model.heatmap_data

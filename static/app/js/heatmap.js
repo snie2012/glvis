@@ -228,7 +228,7 @@ class HeatMap {
             .attr('height', height)
             .call(this.scatterplot_tip);
 
-        this.scatterplot = new Scatterplot2D(data.tag_type, data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
+        this.scatterplot = new Scatterplot2D(data.tag_type, this.row_div, data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
     }
 
     getSelected() {

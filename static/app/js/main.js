@@ -87,7 +87,7 @@ function subsetArea(parentDiv, term, data) {
 
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')
-        .html(`Number of instances: <b>${data.sentences.length}</b>`);
+        .html(`Number of instances: <b>${data.vectors.length}</b>`);
 
     // Create rows for histograms
     let meanRow = parentDiv.append('div').attr('class', 'row m-1 p-0 ');
@@ -121,8 +121,16 @@ const maxClusterNum = 31;
 
 // Tooltip for heatmap
 let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
-let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { 
-    return `prediction: ${d.prediction['class']}<br>probability: ${d.prediction['prob']}`; 
+let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) {
+    let tip_text;
+    if (d.tag_type == 'no_tag') {
+        tip_text = `input: ${d.input}`;
+    } else if (d.tag_type == 'binary') {
+        tip_text = `input: ${d.input}<br>prediction: ${d.prediction['class']}<br>probability: ${d.prediction['prob']}`;
+    } else if (d.tag_type == 'multiclass') {
+        tip_text = `input: ${d.input}<br>prediction: ${d.tag}`;
+    }
+    return tip_text; 
 });
 
 function dimensionArea(parentRow, parentDiv, data) {

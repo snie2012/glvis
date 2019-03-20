@@ -1,14 +1,17 @@
 import * as d3 from "d3";
 
 class Scatterplot2D {
-    constructor(tag_type, data, svg, w, h, padding, tip) {
+    constructor(tag_type, row_div, data, svg, w, h, padding, tip) {
         this.tag_type = tag_type;
-        this.data = data;
+        this.row_div = row_div;
         this.svg = svg;
         this.w = w;
         this.h = h;
         this.padding = padding;
         this.tip = tip;
+
+        data = data.map((d) => {d.tag_type = tag_type; return d;});
+        this.data = data;
 
         //Set scales
         this.xScale = d3.scaleLinear()
