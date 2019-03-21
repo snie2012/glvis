@@ -102,7 +102,7 @@ def serve_dimension_reduction():
     # Process prediction data if the model has prediction data
     if model.tag_type == 'no_tag':
         response_data = [
-            {'coords': coord, 'input': input_d} for coord, input_d in zip(coords.tolist(), input_data)
+            {'coords': coord, 'input': input_d, 'instance_id': inst} for coord, input_d, inst in zip(coords.tolist(), input_data, instances)
         ]
     elif model.tag_type == 'binary':
         predictions = model.preds[instances]
@@ -111,12 +111,12 @@ def serve_dimension_reduction():
             idx = np.argmax(elm)
             prob = elm[idx] if idx == 0 else -elm[idx]
             preds.append({'class': int(idx),'prob': float(prob)})
-        response_data = [{'coords': coord, 'prediction': pred, 'input': input_d} for coord, pred, input_d in zip(coords.tolist(), preds, input_data)]
+        response_data = [{'coords': coord, 'prediction': pred, 'input': input_d, 'instance_id': inst} for coord, pred, input_d, inst in zip(coords.tolist(), preds, input_data, instances)]
     elif model.tag_type == 'multiclass':
         predictions = model.preds[instances]
         preds = [model.tag_dict[tag] for tag in predictions]
 
-        response_data = [{'coords': coord, 'prediction': pred, 'input':input_d, 'tag': tag} for coord, pred, input_d, tag in zip(coords.tolist(), preds, input_data, predictions)]
+        response_data = [{'coords': coord, 'prediction': pred, 'input':input_d, 'tag': tag, 'instance_id': inst} for coord, pred, input_d, tag, inst in zip(coords.tolist(), preds, input_data, predictions, instances)]
     else:
         raise Exception()
 

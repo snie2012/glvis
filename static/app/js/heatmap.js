@@ -181,8 +181,19 @@ class HeatMap {
     }
 
     bindCellEvents() {
-        this.cells.on('mouseover', this.heatmap_tip.show)
-            .on('mouseout', this.heatmap_tip.hide)
+        this.cells
+            .on('mouseover.tip', this.heatmap_tip.show)
+            .on('mouseout.tip', this.heatmap_tip.hide)
+            .on('mouseover.highlight', (d) => {
+                if (this.scatterplot) {
+                    this.scatterplot.highlight(d.instances);
+                }
+            })
+            .on('mouseout.highlight', (d) => {
+                if (this.scatterplot) {
+                    this.scatterplot.resetColor();
+                }
+            })
             .on('click', (d) => {
                 if (this.mode == 'Detail') return;
                 const request_data = {

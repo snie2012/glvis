@@ -28,11 +28,11 @@ class Scatterplot2D {
         this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
 
         // Define color scale
-        let colorScale;
+        this.colorScale = null;
         if (this.tag_type == 'binary') {
-            colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+            this.colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
         } else if (this.tag_type == 'multiclass') {
-            colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         }
 
         // Bind brush events before the creation of groups and circles to allow tooltip to show
@@ -47,7 +47,7 @@ class Scatterplot2D {
                 .attr('width', [padding, w - padding])
                 .attr('height', [h-padding, padding]);
 
-        this.group.selectAll("circle")
+        this.circles = this.group.selectAll("circle")
             .data(data)
             .enter()
             .append("circle")
@@ -56,9 +56,9 @@ class Scatterplot2D {
             .attr("r", 4)
             .attr("fill", (d) => {
                 if (this.tag_type == 'binary') {
-                    return colorScale(d.prediction['prob'])
+                    return this.colorScale(d.prediction['prob'])
                 } else if (this.tag_type == 'multiclass') {
-                    return colorScale(d.prediction);
+                    return this.colorScale(d.prediction);
                 } else if (this.tag_type == 'no_tag') {
                     return '#beaed4';
                 }
@@ -175,6 +175,29 @@ class Scatterplot2D {
         //     .attr('height', height)
         //     .call(this.scatterplot_tip);
         
+    }
+
+    // Highlight the corresponding instances in the heatmap cell
+    highlight(instances) {
+        const inst_set = new Set(instances);
+        this.circles.attr('fill', (d) => {
+            if (inst_set.has(d.instance_id)) {
+                return "#fc8d62";
+            }
+        })
+    }
+
+    // Reset color if no highlight
+    resetColor() {
+        this.circles.attr("fill", (d) => {
+            if (this.tag_type == 'binary') {
+                return this.colorScale(d.prediction['prob'])
+            } else if (this.tag_type == 'multiclass') {
+                return this.colorScale(d.prediction);
+            } else if (this.tag_type == 'no_tag') {
+                return '#beaed4';
+            }
+        })
     }
 }
 
