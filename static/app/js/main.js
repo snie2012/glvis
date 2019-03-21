@@ -25,9 +25,11 @@ d3.select('#canvas')
 //     .style('height', window.innerHeight * 0.9 + 'px')
 //     .style('overflow-y', 'scroll');
 
-// Set default values for model and query term
+// Set default values for model name, query method and query term
 let model_name = 'bert_mrpc';
+let query_method = 'random_sample';
 d3.select('#model-name-input').property("value", model_name);
+d3.select('#query-method-input').property("value", query_method);
 d3.select('#query-input').property("value", 100);
 
 // Bind event to model name selector
@@ -36,25 +38,44 @@ d3.selectAll('#model-name-list a').on('click', function() {
     d3.select('#model-name-input').property("value", model_name);
 })
 
+// Bind event to query method selector
+d3.selectAll('#query-method-list a').on('click', function() {
+    query_method = d3.select(this).html();
+    d3.select('#query-method-input').property("value", query_method);
+})
+
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
-    const sample_size = d3.select('#query-input').property('value');
-    if (!sample_size) return;
+    const query_input = d3.select('#query-input').property('value');
+    if (!query_input) return;
+
     console.log(`Model name: ${model_name}`);
-    console.log(`Sample size: ${sample_size}`);
-    
-    // Retrive subset data from a specified endpoint, then visualize the data
-    const request_data = {
-        'sample_size': sample_size,
-        'model_name': model_name,
-        'db_col_name': model_name
+    console.log(`Query method: ${query_method}`);
+    console.log(`Query method: ${query_input}`);
+
+    let request_data;
+    if (query_method == 'random_sample') {
+        request_data = {
+            'query_method': query_method,
+            'sample_size': query_input,
+            'model_name': model_name,
+            'db_col_name': model_name
+        }
+    } else if (query_method == 'text_match') {
+        request_data = {
+            'query_method': query_method,
+            'term': query_input,
+            'model_name': model_name,
+            'db_col_name': model_name
+        }
     }
     
+    // Retrive subset data from a specified endpoint, then visualize the data
     postJson('/query_model_data', request_data).then(data => {
         console.log(data);
         let newRow = createRow();
-        subsetArea(newRow.summary_div, sample_size, data);
+        subsetArea(newRow.summary_div, query_input, data);
         dimensionArea(newRow.row_div, newRow.dimension_div, data);
     })
 })
@@ -75,7 +96,7 @@ function createRow() {
 }
 
 
-function subsetArea(parentDiv, term, data) {
+function subsetArea(parentDiv, input, data) {
     // Create rows to display the query info
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')
@@ -83,7 +104,11 @@ function subsetArea(parentDiv, term, data) {
 
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')
-        .html(`Query term: <b>${term}</b>`);
+        .html(`Query method: <b>${query_method}</b>`);
+
+    parentDiv.append('div')
+        .attr('class', 'row ml-1 p-0 text-center')
+        .html(`Query input: <b>${input}</b>`);
 
     parentDiv.append('div')
         .attr('class', 'row ml-1 p-0 text-center')

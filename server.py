@@ -4,9 +4,9 @@ from sklearn.manifold import TSNE
 import umap
 import itertools
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, abort
 
-from db_utils import query_sentiment_model, random_sample, DB_KEY_DICT
+from db_utils import random_sample, text_match, DB_KEY_DICT
 from clean_text import clean_text, remove_tags
 
 from hierarchical_clustering import cluster_row_and_col
@@ -131,12 +131,21 @@ def query_model_data():
 
     model_name = response['model_name']
     db_col_name = response['db_col_name']
+    query_method = response['query_method']
 
-    sample_size = int(response['sample_size'])
-    print(f'Sample size: {sample_size}')
+    if query_method == 'random_sample':
+        sample_size = int(response['sample_size'])
+        print(f'Sample size: {sample_size}')
+        query_result = random_sample(sample_size, db_col_name)
+    elif query_method == 'text_match':
+        term = response['term']
+        print(f'Query term: {term}')
+        query_result = text_match(term, db_col_name)
+    else:
+        raise Exception()
 
-    # Query results from db
-    query_result = random_sample(sample_size, db_col_name)
+    if not query_result:
+        abort(400, 'Empty query result')
 
     # Use the queried results to fill the ModelData class
     model = fill_model_data(query_result, model_name)
@@ -165,6 +174,10 @@ def heatmap_data():
         heatmap_data=heatmap_data
     )
 
+@app.errorhandler(400)
+def abort400(error):
+    response = jsonify({'message': error.description})
+    return response
 
 @app.route('/')
 def index():

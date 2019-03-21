@@ -151,13 +151,13 @@ DB_KEY_DICT = {
 }
 
 
-def query_sentiment_model(term, collection='flattened'):
+def text_match(term, collection, limit=2000):
     # Query the sentiment model data
     pipeline = {
-        '$text': {'$search': '\"{}\"'.format(term)}
+        '$text': {'$search': f'{term}'}
     }
 
-    return list(db[collection].find(pipeline))
+    return list(db[collection].find(pipeline).limit(limit))
 
 
 def random_sample(size, collection):
