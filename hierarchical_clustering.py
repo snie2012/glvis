@@ -13,9 +13,10 @@ Max_Cluster_Num = 31
 def cluster_row_and_col(mat, dist_type='cosine', linkage_type='average', group_type='maxclust'):
     # Cluster both row and column
     cluster_results = {}
+    max_level = len(mat) if len(mat) < Max_Cluster_Num else Max_Cluster_Num
     for rc_type in ['row', 'col']:
         dist_mat = calc_distance_matrix(mat, rc_type, dist_type)
-        cluster_results[rc_type] = cluster_and_group(dist_mat, len(mat), linkage_type=linkage_type, group_type=group_type)
+        cluster_results[rc_type] = cluster_and_group(dist_mat, max_level, linkage_type=linkage_type, group_type=group_type)
 
     return cluster_results
 
@@ -31,7 +32,7 @@ def calc_distance_matrix(mat, rc_type, dist_type='cosine'):
     return dist_mat
 
 
-def cluster_and_group(dist_mat, num_of_points, linkage_type='average', group_type='maxclust'):
+def cluster_and_group(dist_mat, max_level, linkage_type='average', group_type='maxclust'):
     Y = hier.linkage(dist_mat, method=linkage_type)
     Z = hier.dendrogram(Y, no_plot=True)
     new_idx = Z['leaves']
@@ -48,8 +49,7 @@ def cluster_and_group(dist_mat, num_of_points, linkage_type='average', group_typ
             groups[key] = np.array([new_idx[partial_sum[i-1] : partial_sum[i]] for i in range(1, len(partial_sum))])
 
     elif group_type == 'maxclust':
-        max_num = num_of_points if num_of_points < Max_Cluster_Num else Max_Cluster_Num
-        for num_cluster in range(2, max_num):
+        for num_cluster in range(2, max_level):
             fc_num = hier.fcluster(Y, num_cluster, criterion='maxclust')
             fc_num = fc_num[new_idx] # Index fc_num according to the new order
             count = np.array([len(list(g)) for k, g in itertools.groupby(fc_num)])

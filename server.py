@@ -9,8 +9,8 @@ from flask import Flask, jsonify, render_template, request, abort
 from db_utils import random_sample, text_match, DB_KEY_DICT
 from clean_text import clean_text, remove_tags
 
-from hierarchical_clustering import cluster_row_and_col
-from prepare_draw_data import prepare_heatmap_data
+from sep_clustering import sep_clustering
+from dim_inst_data import prepare_sep_data
 
 from server_data import ModelData
 
@@ -65,9 +65,9 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
         {'dim': i,'mean': val[0],'std': val[1]} for i, val in enumerate(zip(mean, std))
     ]
 
-    model.cluster_res = cluster_row_and_col(model.reps)
+    model.dim_groups, model.inst_groups = sep_clustering(model.reps)
 
-    model.heatmap_data = prepare_heatmap_data(model.reps, model.cluster_res, num_of_rows=ROW_NUM, num_of_cols=COL_NUM)
+    model.heatmap_data = prepare_sep_data(model.reps, model.dim_groups, model.inst_groups, num_of_dims=COL_NUM)
 
     return model
 

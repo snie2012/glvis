@@ -9,7 +9,7 @@ import {postJson} from "./util";
 
 import {WordCloud} from "./wordcloud";
 import {Histogram} from "./histogram";
-import {HeatMap} from './heatmap';
+import {SepHeatmap} from './sep_heatmap';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
@@ -218,7 +218,7 @@ function dimensionArea(parentRow, parentDiv, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatMap = new HeatMap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, 'Summary', parentRow);
+    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, parentRow);
 
     // Bind event to scatterplot button
     scpButton.on('click', () => heatMap.drawSelected());
