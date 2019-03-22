@@ -16,7 +16,9 @@ class SepHeatmap {
         this.padding = padding;
 
         this.gap = 0;
-
+        
+        this.scatterplots = [];
+        
         // Calculate unit length for row and column
         this.unit_width = width / vectors[0].length;
         this.unit_height = height / vectors.length;
@@ -98,10 +100,11 @@ class SepHeatmap {
     }
 
     bindDimsCellEvent() {
-        this.dim_rects.on('click', (d, i) => {
-            // Set current clicked group id
-            this.clicked_group = i;
-        })
+        this.dim_rects
+            .on('mouseover.tip', this.heatmap_tip.show)
+            .on('mouseout.tip', this.heatmap_tip.hide)
+            .on('click', (d, i) => {
+            })
     }
 
     bindInstsCellEvent() {
@@ -110,13 +113,13 @@ class SepHeatmap {
                 .on('mouseover.tip', this.heatmap_tip.show)
                 .on('mouseout.tip', this.heatmap_tip.hide)
                 .on('mouseover.highlight', (d) => {
-                    if (this.scatterplot && id == this.clicked_group) {
-                        this.scatterplot.highlight(d.instances);
+                    if (this.scatterplots.length >= id) {
+                        this.scatterplots[id].highlight(d.instances);
                     }
                 })
                 .on('mouseout.highlight', (d) => {
-                    if (this.scatterplot && id == this.clicked_group) {
-                        this.scatterplot.resetColor();
+                    if (this.scatterplots.length >= id) {
+                        this.scatterplots[id].resetColor();
                     }
                 });
         }

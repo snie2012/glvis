@@ -11,6 +11,7 @@ import {WordCloud} from "./wordcloud";
 import {Histogram} from "./histogram";
 import {SepHeatmap} from './sep_heatmap';
 import {Scatterplot2D} from './scatterplot2d';
+import {StackedBarChart} from './stacked_bar_chart';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
@@ -77,7 +78,7 @@ d3.select('#query-button').on('click', () => {
         console.log(data);
         let row = createRow();
         drawInfoArea(row.info, query_input, data);
-        drawSummaryArea(row, data);
+        let heatmap = drawSummaryArea(row, data);
 
         row.detail = row.canvas.append('div')
             .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
@@ -88,8 +89,12 @@ d3.select('#query-button').on('click', () => {
         let scp_row = row.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
             .style('height', `${300}px`);
+        
+        let stack_row = row.detail.append('div')
+            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+            .style('height', `${300}px`);
             
-        drawDetailRow(scp_row, data);
+        drawDetailRow(scp_row, stack_row, data, heatmap);
     })
 })
 
@@ -156,16 +161,18 @@ let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) {
 const DEFAULT_DIM_NUM = 3, DEFAULT_INST_COUNT = 3;
 const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
 
-let cur_dim_num;
-let cur_insts_recorder = _.fill(Array(DEFAULT_DIM_NUM), DEFAULT_INST_COUNT);
-
 function drawSummaryArea(row_div, data) {
+    // Set default values
+    let cur_dim_num = DEFAULT_DIM_NUM;
+    let cur_insts_recorder = _.fill(Array(DEFAULT_DIM_NUM), DEFAULT_INST_COUNT);
+
     // Create dropdown lists to control the number of clusters of the heatmap
     let dims_div =  row_div.summary.append('div')
         .attr('class', 'row m-1');
     
     let dims_menu = createDropdownInput(dims_div);
     dims_menu.button.html('Dims');
+    dims_menu.input.attr('value', cur_dim_num);
 
     let dims_items = dims_menu.dropdown.selectAll('a')
         .data(d3.range(2, MAX_DIM_NUM, 1))
@@ -204,10 +211,6 @@ function drawSummaryArea(row_div, data) {
     let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip);
 
     // Bind event to dropdown menus
-    // first reset rowNum and colNum
-    cur_dim_num = DEFAULT_DIM_NUM;
-    dims_menu.input.attr('value', cur_dim_num);
-
     dims_items.on('click', (d) => {
         // Ignore if the same row is selected
         if (d == cur_dim_num) return;
@@ -233,6 +236,8 @@ function drawSummaryArea(row_div, data) {
     recfg_button.on('click', () => {
         redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
     })
+
+    return heatMap;
 }
 
 function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
@@ -259,14 +264,20 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
             .style('width', `${300 * d.heatmap_data.dims.length + 100}px`)
             .style('height', `${300}px`);
         
+        let stack_row = row_div.detail.append('div')
+            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+            .style('width', `${300 * d.heatmap_data.dims.length + 100}px`)
+            .style('height', `${300}px`);
+
         data.heatmap_data = d.heatmap_data;
-        drawDetailRow(scp_row, data);
+        heatmap.scatterplots = [];
+        drawDetailRow(scp_row, stack_row, data, heatmap);
     })
 }
 
 
 let counter = 0;
-function drawDetailRow(scp_row, data) {
+function drawDetailRow(scp_row, stack_row, data, heatmap) {
     let dims_data = data.heatmap_data.dims;
     let insts_data = data.heatmap_data.insts;
     if (counter == dims_data.length) {
@@ -275,9 +286,10 @@ function drawDetailRow(scp_row, data) {
     }
 
     // Draw scatterplot
+    const instances = insts_data[counter].map(d => d.instances);
     const request_data = {
         'request_identifier': data.request_identifier,
-        'instances': insts_data[counter].map(d => d.instances),
+        'instances': instances,
         'dimensions': dims_data[counter].dimensions,
         'dm_method': 'umap'
     }
@@ -285,19 +297,80 @@ function drawDetailRow(scp_row, data) {
     postJson('/dimension_reduction', request_data).then((scp_data) => {
         console.log(scp_data);
 
+        // Draw scatterplots
         const width = 300, 
-                height = scp_row.node().clientHeight, 
-                padding = 30;
-        let scatterplotSvg = scp_row.append('svg')
+              height = scp_row.node().clientHeight, 
+              padding = 30;
+
+        let scp_svg = scp_row.append('svg')
             .attr('width', width)
             .attr('height', height)
             .attr('transform', `translate(${5}, ${0})`)
             .call(scatterplot_tip);
     
-        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scatterplotSvg, width, height, padding, scatterplot_tip);
+        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding, scatterplot_tip);
 
+        heatmap.scatterplots.push(scplot);
+
+        // Draw stacked bars
+        // Process scp_data to be used for stacked bars
+        if (scp_data.tag_type == 'no_tag') return;
+
+        let cur_len = 0;
+        let psum = [0];
+        for (let i = 0; i < instances.length; i++) {
+            cur_len += instances[i].length;
+            psum.push(cur_len);
+        }
+
+        let stacked_data = [];
+        for (let gid = 0; gid < psum.length - 1; gid++) {
+            let td = {};
+            td.group_id = gid;
+            td.total = instances[gid].length;
+            td.instances = instances[gid];
+
+            if (scp_data.tag_type == 'binary') {
+                td['0'] = 0;
+                td['1'] = 0;
+            } else if (scp_data.tag_type == 'multiclass') {
+                for (let tag in scp_data.tag_dict) {
+                    td[tag] = 0;
+                }
+            }
+
+            for (let si = psum[gid]; si < psum[gid+1]; si++) {
+                const d = scp_data.plot_data[si];
+                if (scp_data.tag_type == 'binary') {
+                    td[d.prediction.class] += 1
+                } else if (scp_data.tag_type == 'multiclass') {
+                    td[d.tag] += 1;
+                }
+            }
+
+            stacked_data.push(td);
+        }
+
+        const sw = 300, 
+              sh = stack_row.node().clientHeight, 
+              spadding = 30;
+
+        let stack_svg = stack_row.append('svg')
+            .attr('width', sw)
+            .attr('height', sh)
+            .attr('transform', `translate(${5}, ${0})`);
+        
+        let tag_keys = scp_data.tag_type == 'binary' ? ['0', '1'] : Object.keys(scp_data.tag_dict);
+
+        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh);
+        
         counter++;
 
-        drawDetailRow(scp_row, data);
+        drawDetailRow(scp_row, stack_row, data, heatmap);
     })
+}
+
+
+function stackBarData(d) {
+
 }

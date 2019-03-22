@@ -192,13 +192,14 @@ class Scatterplot2D {
     // Reset color if no highlight
     resetColor() {
         this.circles.attr("fill", (d) => {
-            if (this.tag_type == 'binary') {
-                return this.colorScale(d.prediction['prob'])
-            } else if (this.tag_type == 'multiclass') {
-                return this.colorScale(d.prediction);
-            } else if (this.tag_type == 'no_tag') {
-                return '#beaed4';
-            }
+            // if (this.tag_type == 'binary') {
+            //     return this.colorScale(d.prediction['prob'])
+            // } else if (this.tag_type == 'multiclass') {
+            //     return this.colorScale(d.prediction);
+            // } else if (this.tag_type == 'no_tag') {
+            //     return '#beaed4';
+            // }
+            return this.groupColorScale(d.group_id);
         })
     }
 }

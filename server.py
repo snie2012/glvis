@@ -116,6 +116,7 @@ def serve_dimension_reduction():
         raise Exception()
 
     return jsonify(
+        tag_dict=model.tag_dict if model.tag_type == 'multiclass' else 0,
         tag_type=model.tag_type,
         plot_data=response_data
     )
