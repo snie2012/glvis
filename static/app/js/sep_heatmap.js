@@ -4,13 +4,12 @@ import {postJson} from './util';
 import {Scatterplot2D} from './scatterplot2d';
 
 class SepHeatmap {
-    constructor(data, vectors, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip, row_div) {
+    constructor(data, vectors, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip) {
         this.data = data;
         this.request_identifier = request_identifier;
         this.svg = svg;
         this.heatmap_tip = heatmap_tip;
         this.scatterplot_tip = scatterplot_tip;
-        this.row_div = row_div;
 
         this.width = width;
         this.height = height;
@@ -22,6 +21,13 @@ class SepHeatmap {
         this.unit_width = width / vectors[0].length;
         this.unit_height = height / vectors.length;
 
+        // Draw
+        this.reDraw();
+    }
+
+    reDraw() {
+        if (this.transform_group) this.transform_group.remove();
+
         // Calculate color scale
         let extents = [];
         extents.push(d3.extent(this.data.dims, d => d.mean));
@@ -30,12 +36,6 @@ class SepHeatmap {
         })
         this.color_scale = d3.scaleSequential(d3.interpolateRdBu).domain(d3.extent(_.flatten(extents)));
 
-        // Draw
-        this.reDraw();
-    }
-
-    reDraw() {
-        if (this.transform_group) this.transform_group.remove();
 
         this.transform_group = this.svg.append('g')
             .attr('transform', `translate(${0}, ${10})`);
@@ -101,18 +101,6 @@ class SepHeatmap {
         this.dim_rects.on('click', (d, i) => {
             // Set current clicked group id
             this.clicked_group = i;
-
-            const request_data = {
-                'request_identifier': this.request_identifier,
-                'instances': [],
-                'dimensions': d.dimensions,
-                'dm_method': 'umap'
-            }
-    
-            postJson('/dimension_reduction', request_data).then(data => {
-                console.log(data);
-                this.drawScatterplot(data);
-            })
         })
     }
 
@@ -132,26 +120,6 @@ class SepHeatmap {
                     }
                 });
         }
-    }
-
-    drawScatterplot(data) {
-        let scatterplotRow = this.row_div.select('#scatterplot2d');
-        if (scatterplotRow) scatterplotRow.remove();
-
-        scatterplotRow = this.row_div
-            .append('div')
-            .attr('class', 'col-3 ml-1 p-0')
-            .attr('id', 'scatterplot2d');
-        
-        const width = scatterplotRow.node().clientWidth, 
-              height = scatterplotRow.node().clientHeight, 
-              padding = 30;
-        let scatterplotSvg = scatterplotRow.append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .call(this.scatterplot_tip);
-
-        this.scatterplot = new Scatterplot2D(data.tag_type, this.row_div, data.plot_data, scatterplotSvg, width, height, padding, this.scatterplot_tip);
     }
 
     bindZoom() {

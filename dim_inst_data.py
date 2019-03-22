@@ -2,10 +2,10 @@ import numpy as np
 
 # Prepare data to draw dimensions and instances separately
 
-def prepare_sep_data(mat, dim_groups, inst_groups, num_of_dims):
+def prepare_sep_data(mat, dim_groups, inst_groups, num_of_dims, num_of_instances=None):
     num_of_dims = num_of_dims if num_of_dims < len(mat[0]) else len(mat[0])
 
-    nums_of_instances = [3 for _ in range(num_of_dims)]
+    nums_of_instances = num_of_instances if num_of_instances else [3 for _ in range(num_of_dims)]
     """
     What should the data look like?
     {
@@ -37,7 +37,7 @@ def prepare_sep_data(mat, dim_groups, inst_groups, num_of_dims):
             'w': len(dims),
             'mean': float(mat[:, dims].mean()),
             'std': float(mat[:, dims].std()),
-            'dimensions': dims
+            'dimensions': dims if isinstance(dims, list) else dims.tolist()
         })
 
         inst_group = inst_groups[num_of_dims][i][nums_of_instances[i]]
@@ -49,7 +49,7 @@ def prepare_sep_data(mat, dim_groups, inst_groups, num_of_dims):
             'h': len(insts),
             'mean': float(mat[insts, :][:, dims].mean()),
             'std': float(mat[insts, :][:, dims].std()),
-            'instances': insts
+            'instances': insts if isinstance(insts, list) else insts.tolist()
         } for j, insts in enumerate(inst_group)])
 
     return {'dims': dims_data, 'insts': insts_data}

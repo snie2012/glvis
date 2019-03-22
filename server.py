@@ -79,44 +79,39 @@ def serve_dimension_reduction():
     model = data_dict[response['request_identifier']]
 
     instances = response['instances']
+    inst_group_ids = []
+    instances_flatten = []
+    for i, g in enumerate(instances):
+        inst_group_ids += [i] * len(g)
+        instances_flatten += g
+
     dimensions = response['dimensions']
-
-    if len(instances) == 0:
-        instances = list(range(len(model.inputs)))
-        reps = model.reps[:, dimensions]
-        # random_dims = np.random.choice(model.reps.shape[1], len(dimensions), replace=False)
-        # random_dims.sort()
-        # print(random_dims)
-        # reps = model.reps[:, random_dims]
-    elif len(dimensions) == 0:
-        reps = model.reps[instances, :]
-    else:
-        reps = model.reps[instances, :]
-        reps = reps[:, dimensions]
-
+    reps = model.reps[instances_flatten, :][:, dimensions]
+    
     print(f'Perform dimension reduction on shape: {reps.shape}')
     coords = reducers[dm_method].fit_transform(reps)
 
-    input_data = model.inputs[instances]
+    input_data = model.inputs[instances_flatten]
 
     # Process prediction data if the model has prediction data
+    response_data = [
+        {'coords': coord, 'input': input_d, 'instance_id': inst, 'group_id': g_id} for coord, input_d, inst, g_id in zip(coords.tolist(), input_data, instances_flatten, inst_group_ids)
+    ]
+
     if model.tag_type == 'no_tag':
-        response_data = [
-            {'coords': coord, 'input': input_d, 'instance_id': inst} for coord, input_d, inst in zip(coords.tolist(), input_data, instances)
-        ]
+        pass
     elif model.tag_type == 'binary':
-        predictions = model.preds[instances]
-        preds = []
-        for elm in predictions:
+        predictions = model.preds[instances_flatten]
+        for i, elm in enumerate(predictions):
             idx = np.argmax(elm)
             prob = elm[idx] if idx == 0 else -elm[idx]
-            preds.append({'class': int(idx),'prob': float(prob)})
-        response_data = [{'coords': coord, 'prediction': pred, 'input': input_d, 'instance_id': inst} for coord, pred, input_d, inst in zip(coords.tolist(), preds, input_data, instances)]
+            response_data[i]['prediction'] = {'class': int(idx),'prob': float(prob)}
     elif model.tag_type == 'multiclass':
-        predictions = model.preds[instances]
-        preds = [model.tag_dict[tag] for tag in predictions]
-
-        response_data = [{'coords': coord, 'prediction': pred, 'input':input_d, 'tag': tag, 'instance_id': inst} for coord, pred, input_d, tag, inst in zip(coords.tolist(), preds, input_data, predictions, instances)]
+        predictions = model.preds[instances_flatten]
+        tags = [model.tag_dict[tag] for tag in predictions]
+        for i in range(len(predictions)):
+            response_data[i]['prediction'] = tags[i]
+            response_data[i]['tag'] = predictions[i]
     else:
         raise Exception()
 
@@ -144,7 +139,7 @@ def query_model_data():
     else:
         raise Exception()
 
-    if not query_result:
+    if not query_result or len(query_result) < 2:
         abort(400, 'Empty query result')
 
     # Use the queried results to fill the ModelData class
@@ -167,8 +162,10 @@ def heatmap_data():
     response = request.json
     
     model = data_dict[response['request_identifier']]
+    dim_num = response['dim_num']
+    insts_nums = response['insts_nums']
 
-    heatmap_data = prepare_heatmap_data(model.reps, model.cluster_res, num_of_rows=int(response['row_num']), num_of_cols=int(response['col_num']))
+    heatmap_data = prepare_sep_data(model.reps, model.dim_groups, model.inst_groups, num_of_dims=dim_num, num_of_instances=insts_nums)
 
     return jsonify(
         heatmap_data=heatmap_data

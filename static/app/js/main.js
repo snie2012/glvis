@@ -4,12 +4,13 @@ import * as d3 from "d3";
 import d3_tip from "d3-tip";
 import 'bootstrap';
 
-import {createDropdownInput} from "./ui_helper";
+import {createDropdownInput, createMultipleDropdowns} from "./ui_helper";
 import {postJson} from "./util";
 
 import {WordCloud} from "./wordcloud";
 import {Histogram} from "./histogram";
 import {SepHeatmap} from './sep_heatmap';
+import {Scatterplot2D} from './scatterplot2d';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
@@ -17,7 +18,7 @@ window.d3_tip = d3_tip;
 
 // Set height for the canvas area to support overflow scroll
 d3.select('#canvas')
-    .style('height', window.innerHeight * 0.90 + 'px')
+    .style('height', window.innerHeight * 0.945 + 'px')
     .style('overflow-y', 'scroll');
 
 // Set height for the domain area to support overflow scroll
@@ -74,75 +75,69 @@ d3.select('#query-button').on('click', () => {
     // Retrive subset data from a specified endpoint, then visualize the data
     postJson('/query_model_data', request_data).then(data => {
         console.log(data);
-        let newRow = createRow();
-        subsetArea(newRow.summary_div, query_input, data);
-        dimensionArea(newRow.row_div, newRow.dimension_div, data);
+        let row = createRow();
+        drawInfoArea(row.info, query_input, data);
+        drawSummaryArea(row, data);
+
+        row.detail = row.canvas.append('div')
+            .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
+            // .style('width', `${contentDiv.node().clientWidth * 0.8}px`)
+            .style('height', `${row.canvas.node().clientHeight}px`)
+            .style('overflow', 'scroll');
+        
+        let scp_row = row.detail.append('div')
+            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+            .style('height', `${300}px`);
+            
+        drawDetailRow(scp_row, data);
     })
 })
 
 
 function createRow() {
     let rowDiv = d3.select('#canvas').append('div')
-        .attr('class', 'row border-bottom border-secondary')
+        .attr('class', 'row m-1 border-bottom border-secondary');
+    
+    let infoDiv = rowDiv.append('div')
+        .attr('class', 'row m-1 border-bottom border-secondary')
+        .style('width', `${window.innerWidth * 0.99}px`);
+
+    let canvasDiv = rowDiv.append('div')
+        .attr('class', 'row')
         .style('width', `${window.innerWidth * 0.99}px`)
-        .style('height', `${500}px`);
-    let summaryDiv = rowDiv.append('div').attr('class', 'col-2 ml-1 pr-0');
-    let dimensionDiv = rowDiv.append('div').attr('class', 'col-4 ml-1 p-0');
+        .style('height', `${800}px`);
+    
+    let summaryDiv = canvasDiv.append('div')
+        .attr('class', 'col-3 m-1 pr-0 border-right border-secondary');
+        // .style('width', `${contentDiv.node().clientWidth * 0.2}px`);
+
     return {
-        'row_div': rowDiv,
-        'summary_div': summaryDiv, 
-        'dimension_div': dimensionDiv
+        'info': infoDiv,
+        'canvas': canvasDiv,
+        'summary': summaryDiv
     };
 }
 
-
-function subsetArea(parentDiv, input, data) {
+function drawInfoArea(parentDiv, input, data) {
     // Create rows to display the query info
     parentDiv.append('div')
-        .attr('class', 'row ml-1 p-0 text-center')
+        .attr('class', 'col ml-1 p-0 text-center')
         .html(`Model name: <b>${model_name}</b>`);
 
     parentDiv.append('div')
-        .attr('class', 'row ml-1 p-0 text-center')
+        .attr('class', 'col ml-1 p-0 text-center')
         .html(`Query method: <b>${query_method}</b>`);
 
     parentDiv.append('div')
-        .attr('class', 'row ml-1 p-0 text-center')
+        .attr('class', 'col ml-1 p-0 text-center')
         .html(`Query input: <b>${input}</b>`);
 
     parentDiv.append('div')
-        .attr('class', 'row ml-1 p-0 text-center')
+        .attr('class', 'col ml-1 p-0 text-center')
         .html(`Number of instances: <b>${data.vectors.length}</b>`);
 
-    // Create rows for histograms
-    let meanRow = parentDiv.append('div').attr('class', 'row m-1 p-0 ');
-    let stdRow = parentDiv.append('div').attr('class', 'row m-1 p-0');
-
-    // Set the width and height for each histogram
-    const width = parentDiv.node().clientWidth * 0.9, 
-          height = parentDiv.node().clientHeight * 0.4;
-
-    // Create a svg for the histogram of mean values
-    // and use it to plot histogram for mean values
-    let meanSvg = meanRow.append('svg')
-        .attr('width', width)
-        .attr('height', height);
-
-    let meanHist = new Histogram(data.stats.map(d => d.mean), meanSvg, width, height, '#7fc97f');
-
-    // Create a svg for the histogram of std values
-    // and use it to plot histogram for std values
-    let stdSvg = stdRow.append('svg')
-        .attr('width', width)
-        .attr('height', height);
-
-    let stdHist = new Histogram(data.stats.map(d => d.std), stdSvg, width, height, '#fdc086');
 }
 
-// Set up constants for the dimension area
-const RowNum = 2, ColNum = 3;
-let curRowNum = RowNum, curColNum = ColNum;
-const maxClusterNum = 31;
 
 // Tooltip for heatmap
 let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
@@ -158,59 +153,47 @@ let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) {
     return tip_text; 
 });
 
-function dimensionArea(parentRow, parentDiv, data) {
-    // 1. Create row for controller items
-    let controllerDiv = parentDiv.append('div')
-        .attr('class', 'row m-1 p-0');
-    
-    // 2. Create dropdown lists to control the number of clusters of the heatmap
-    let rowDiv = controllerDiv.append('div')
-        .attr('class', 'col');
-    
-    let rowMenu = createDropdownInput(rowDiv);
-    rowMenu.button.html('Rows');
+const DEFAULT_DIM_NUM = 3, DEFAULT_INST_COUNT = 3;
+const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
 
-    const rowNum = data.vectors.length < maxClusterNum ? data.vectors.length : maxClusterNum;
-    let rowItems = rowMenu.dropdown.selectAll('a')
-        .data(d3.range(2, rowNum, 1))
+let cur_dim_num;
+let cur_insts_recorder = _.fill(Array(DEFAULT_DIM_NUM), DEFAULT_INST_COUNT);
+
+function drawSummaryArea(row_div, data) {
+    // Create dropdown lists to control the number of clusters of the heatmap
+    let dims_div =  row_div.summary.append('div')
+        .attr('class', 'row m-1');
+    
+    let dims_menu = createDropdownInput(dims_div);
+    dims_menu.button.html('Dims');
+
+    let dims_items = dims_menu.dropdown.selectAll('a')
+        .data(d3.range(2, MAX_DIM_NUM, 1))
         .enter()
         .append('a')
         .attr('class', 'dropdown-item')
         .html(d => d);
     
-    let colDiv = controllerDiv.append('div')
-        .attr('class', 'col');
+    // Menu for instances
+    let insts_parent_div =  row_div.summary.append('div')
+        .attr('class', 'row m-1');
     
-    let colMenu = createDropdownInput(colDiv);
-    colMenu.button.html('Columns');
+    let insts_div = insts_parent_div.append('div')
+        .attr('class', 'row m-1');
+
+    let recfg_button = createMultipleDropdowns(insts_div, DEFAULT_DIM_NUM, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder, 'Reconfigure');
     
-    const colNum = data.vectors[0].length < maxClusterNum ? data.vectors[0].length : maxClusterNum;
-    let colItems = colMenu.dropdown.selectAll('a')
-        .data(d3.range(2, colNum, 1))
-        .enter()
-        .append('a')
-        .attr('class', 'dropdown-item')
-        .html(d => d);
-
-    // 3. Create button to draw scatterplot
-    let scpButton = controllerDiv.append('div')
-        .attr('class', 'col')
-        .append('button')
-        .attr('type', 'button')
-        .attr('class', 'btn btn-outline-primary btn-sm')
-        .html('Scatterplot');
-
-    // 4. Draw heatmap for the selected subset
+    // Draw heatmap for the selected subset
 
     // Clear dimension draw area if it already exists
     // Set height for the dimension area to support overflow scroll
-    let heatmapDrawArea = parentDiv.append('div')
-        .attr('class', 'row ml-1 p-0')
-        .style('height', window.innerHeight * 0.45 + 'px');
+    let heatmapDrawArea = row_div.summary.append('div')
+        .attr('class', 'row m-3')
+        .style('height', 500 + 'px');
 
     // width, height and padding for scatterplot svg
-    const width = heatmapDrawArea.node().parentElement.clientWidth - 100, 
-          height = heatmapDrawArea.node().parentElement.clientHeight - 100; 
+    const width = heatmapDrawArea.node().clientWidth - 100;
+    const height = heatmapDrawArea.node().clientHeight - 100; 
     const padding = 20;
 
     let heatmapSvg = heatmapDrawArea.append('svg')
@@ -218,52 +201,103 @@ function dimensionArea(parentRow, parentDiv, data) {
                         .attr('height', height + 50)
                         .call(heatmap_tip);
     
-    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip, parentRow);
-
-    // Bind event to scatterplot button
-    scpButton.on('click', () => heatMap.drawSelected());
+    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip);
 
     // Bind event to dropdown menus
     // first reset rowNum and colNum
-    curRowNum = RowNum;
-    curColNum = ColNum;
+    cur_dim_num = DEFAULT_DIM_NUM;
+    dims_menu.input.attr('value', cur_dim_num);
 
-    rowMenu.input.attr('value', curRowNum);
-    colMenu.input.attr('value', curColNum);
+    dims_items.on('click', (d) => {
+        // Ignore if the same row is selected
+        if (d == cur_dim_num) return;
 
-    rowItems.on('click', (d) => {
-        if (d == curRowNum) return; // Ignore if the same row is selected
-        curRowNum = d;
-        rowMenu.input.attr('value', curRowNum);
+        // Set current selecte value
+        cur_dim_num = d;
+        dims_menu.input.attr('value', cur_dim_num);
 
-        // Request new heatmap data and redraw the corresponding heatmap
-        const request_data = {
-            'request_identifier': heatMap.request_identifier,
-            'row_num': curRowNum,
-            'col_num': curColNum
-        }
+        // Recreate dropdown menus for subset selection
+        cur_insts_recorder = _.fill(Array(cur_dim_num), DEFAULT_INST_COUNT);
+
+        if (insts_div) insts_div.remove();
+        insts_div =  insts_parent_div.append('div')
+            .attr('class', 'row m-1');
+
+        let recreated_button = createMultipleDropdowns(insts_div, cur_dim_num, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder, 'Reconfigure');
+
+        recreated_button.on('click', () => {
+            redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
+        })
+    });
+
+    recfg_button.on('click', () => {
+        redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
+    })
+}
+
+function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
+    const request_data = {
+        'request_identifier': heatmap.request_identifier,
+        'dim_num': cur_dim_num,
+        'insts_nums': cur_insts_recorder
+    }
+    
+    postJson('/heatmap_data', request_data).then(d => {
+        heatmap.data = d.heatmap_data;
+        heatmap.reDraw();
+
+        // Redraw detail area
+        if (row_div.detail) row_div.detail.remove();
+        row_div.detail = row_div.canvas.append('div')
+            .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
+            // .style('width', `${contentDiv.node().clientWidth * 0.8}px`)
+            .style('height', `${row_div.canvas.node().clientHeight}px`)
+            .style('overflow-y', 'scroll');
         
-        postJson('/heatmap_data', request_data).then(data => {
-            heatMap.summary_data = data.heatmap_data;
-            heatMap.reDraw();
-        })
-    });
+        let scp_row = row_div.detail.append('div')
+            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+            .style('width', `${300 * d.heatmap_data.dims.length + 100}px`)
+            .style('height', `${300}px`);
+        
+        data.heatmap_data = d.heatmap_data;
+        drawDetailRow(scp_row, data);
+    })
+}
 
-    colItems.on('click', (d) => {
-        if (d == curColNum) return; // Ignore if the same column is selected
-        curColNum = d;
-        colMenu.input.attr('value', curColNum);
 
-        // Request new heatmap data and redraw the corresponding heatmap
-        const request_data = {
-            'request_identifier': heatMap.request_identifier,
-            'row_num': curRowNum,
-            'col_num': curColNum
-        }
+let counter = 0;
+function drawDetailRow(scp_row, data) {
+    let dims_data = data.heatmap_data.dims;
+    let insts_data = data.heatmap_data.insts;
+    if (counter == dims_data.length) {
+        counter = 0;
+        return;
+    }
 
-        postJson('/heatmap_data', request_data).then(data => {
-            heatMap.summary_data = data.heatmap_data;
-            heatMap.reDraw();
-        })
-    });
+    // Draw scatterplot
+    const request_data = {
+        'request_identifier': data.request_identifier,
+        'instances': insts_data[counter].map(d => d.instances),
+        'dimensions': dims_data[counter].dimensions,
+        'dm_method': 'umap'
+    }
+
+    postJson('/dimension_reduction', request_data).then((scp_data) => {
+        console.log(scp_data);
+
+        const width = 300, 
+                height = scp_row.node().clientHeight, 
+                padding = 30;
+        let scatterplotSvg = scp_row.append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('transform', `translate(${5}, ${0})`)
+            .call(scatterplot_tip);
+    
+        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scatterplotSvg, width, height, padding, scatterplot_tip);
+
+        counter++;
+
+        drawDetailRow(scp_row, data);
+    })
 }

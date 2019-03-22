@@ -1,9 +1,8 @@
 import * as d3 from "d3";
 
 class Scatterplot2D {
-    constructor(tag_type, row_div, data, svg, w, h, padding, tip) {
+    constructor(tag_type, data, svg, w, h, padding, tip) {
         this.tag_type = tag_type;
-        this.row_div = row_div;
         this.svg = svg;
         this.w = w;
         this.h = h;
@@ -35,6 +34,8 @@ class Scatterplot2D {
             this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
         }
 
+        this.groupColorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
         // Bind brush events before the creation of groups and circles to allow tooltip to show
         this.bindBrush();
 
@@ -55,13 +56,14 @@ class Scatterplot2D {
             .attr("cy", d => h - this.yScale(d.coords[1]))
             .attr("r", 4)
             .attr("fill", (d) => {
-                if (this.tag_type == 'binary') {
-                    return this.colorScale(d.prediction['prob'])
-                } else if (this.tag_type == 'multiclass') {
-                    return this.colorScale(d.prediction);
-                } else if (this.tag_type == 'no_tag') {
-                    return '#beaed4';
-                }
+                // if (this.tag_type == 'binary') {
+                //     return this.colorScale(d.prediction['prob'])
+                // } else if (this.tag_type == 'multiclass') {
+                //     return this.colorScale(d.prediction);
+                // } else if (this.tag_type == 'no_tag') {
+                //     return '#beaed4';
+                // }
+                return this.groupColorScale(d.group_id);
                     
             })
             // .style("stroke", 'black')
