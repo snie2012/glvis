@@ -1,13 +1,27 @@
 import * as d3 from "d3";
+import d3_tip from "d3-tip";
 
 class Scatterplot2D {
-    constructor(tag_type, data, svg, w, h, padding, tip) {
+    constructor(tag_type, data, svg, w, h, padding) {
         this.tag_type = tag_type;
         this.svg = svg;
         this.w = w;
         this.h = h;
         this.padding = padding;
-        this.tip = tip;
+
+        const formatter = d3.format('.3f');
+        this.tip = d3_tip().attr('class', 'd3-tip').html((d) => {
+            let tip_text;
+            if (d.tag_type == 'no_tag') {
+                tip_text = `input: ${d.input}`;
+            } else if (d.tag_type == 'binary') {
+                tip_text = `input: ${d.input}<br>prediction: ${d.prediction['class']}<br>probability: ${formatter(d.prediction['prob'])}`;
+            } else if (d.tag_type == 'multiclass') {
+                tip_text = `input: ${d.input}<br>prediction: ${d.tag}`;
+            }
+            return tip_text; 
+        });
+        this.svg.call(this.tip);
 
         data = data.map((d) => {d.tag_type = tag_type; return d;});
         this.data = data;
@@ -54,7 +68,7 @@ class Scatterplot2D {
             .append("circle")
             .attr("cx", d => this.xScale(d.coords[0]))
             .attr("cy", d => h - this.yScale(d.coords[1]))
-            .attr("r", 4)
+            .attr("r", 3)
             .attr("fill", (d) => {
                 // if (this.tag_type == 'binary') {
                 //     return this.colorScale(d.prediction['prob'])
@@ -68,8 +82,14 @@ class Scatterplot2D {
             })
             // .style("stroke", 'black')
             // .attr("stroke-width", 0.1)
-            .on('mouseover.tip', tip.show)
-            .on('mouseout.tip', tip.hide);
+            .on('mouseover.tip', this.tip.show)
+            .on('mouseout.tip', this.tip.hide)
+            .on('mouseover.enlarge', function(d) {
+                d3.select(this).attr('r', 5);
+            })
+            .on('mouseout.enlarge', function() {
+                d3.select(this).attr('r', 3);
+            });
 
         //X axis
         this.gX = this.transformGroup.append("g")
@@ -180,12 +200,30 @@ class Scatterplot2D {
     }
 
     // Highlight the corresponding instances in the heatmap cell
-    highlight(instances) {
+    heatmapHighlight(instances) {
         const inst_set = new Set(instances);
         this.circles.attr('fill', (d) => {
             if (inst_set.has(d.instance_id)) {
-                return "#fc8d62";
+                return "red";
             }
+        })
+    }
+
+    stackHighlight(instances, color_scale) {
+        const inst_set = new Set(instances);
+        this.circles.attr('fill', (d) => {
+            let c;
+            if (inst_set.has(d.instance_id)) {
+                if (d.tag_type == 'binary') {
+                    c = color_scale(d.prediction.class);
+                } else if (d.tag_type == 'multiclass') {
+                    c = color_scale(d.tag);
+                }
+            } else {
+                c = 'white';
+            }
+
+            return c;
         })
     }
 

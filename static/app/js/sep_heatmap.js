@@ -1,15 +1,12 @@
 import * as d3 from 'd3';
+import d3_tip from "d3-tip";
 import * as _ from 'lodash';
-import {postJson} from './util';
-import {Scatterplot2D} from './scatterplot2d';
 
 class SepHeatmap {
-    constructor(data, vectors, request_identifier, svg, width, height, padding, heatmap_tip, scatterplot_tip) {
+    constructor(data, vectors, request_identifier, svg, width, height, padding) {
         this.data = data;
         this.request_identifier = request_identifier;
         this.svg = svg;
-        this.heatmap_tip = heatmap_tip;
-        this.scatterplot_tip = scatterplot_tip;
 
         this.width = width;
         this.height = height;
@@ -18,10 +15,14 @@ class SepHeatmap {
         this.gap = 0;
         
         this.scatterplots = [];
-        
+
         // Calculate unit length for row and column
         this.unit_width = width / vectors[0].length;
         this.unit_height = height / vectors.length;
+
+        const formatter = d3.format('.3f');
+        this.tip = d3_tip().attr('class', 'd3-tip').html(d => d.mean ? formatter(d.mean) : formatter(d));
+        this.svg.call(this.tip);
 
         // Draw
         this.reDraw();
@@ -101,8 +102,8 @@ class SepHeatmap {
 
     bindDimsCellEvent() {
         this.dim_rects
-            .on('mouseover.tip', this.heatmap_tip.show)
-            .on('mouseout.tip', this.heatmap_tip.hide)
+            .on('mouseover.tip', this.tip.show)
+            .on('mouseout.tip', this.tip.hide)
             .on('click', (d, i) => {
             })
     }
@@ -110,15 +111,15 @@ class SepHeatmap {
     bindInstsCellEvent() {
         for (let id = 0; id < this.inst_rects.length; id++) {
             this.inst_rects[id]
-                .on('mouseover.tip', this.heatmap_tip.show)
-                .on('mouseout.tip', this.heatmap_tip.hide)
+                .on('mouseover.tip', this.tip.show)
+                .on('mouseout.tip', this.tip.hide)
                 .on('mouseover.highlight', (d) => {
-                    if (this.scatterplots.length >= id) {
-                        this.scatterplots[id].highlight(d.instances);
+                    if (this.scatterplots.length > id) {
+                        this.scatterplots[id].heatmapHighlight(d.instances);
                     }
                 })
                 .on('mouseout.highlight', (d) => {
-                    if (this.scatterplots.length >= id) {
+                    if (this.scatterplots.length > id) {
                         this.scatterplots[id].resetColor();
                     }
                 });

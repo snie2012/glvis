@@ -1,4 +1,5 @@
 import "../css/main.scss";
+import "../css/tooltip.css";
 
 import * as d3 from "d3";
 import d3_tip from "d3-tip";
@@ -16,6 +17,10 @@ import {StackedBarChart} from './stacked_bar_chart';
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
 window.d3_tip = d3_tip;
+
+// Set up constants
+const scplot_width = 300;
+const scplot_height = 300;
 
 // Set height for the canvas area to support overflow scroll
 d3.select('#canvas')
@@ -45,7 +50,6 @@ d3.selectAll('#query-method-list a').on('click', function() {
     query_method = d3.select(this).html();
     d3.select('#query-method-input').property("value", query_method);
 })
-
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
@@ -88,11 +92,11 @@ d3.select('#query-button').on('click', () => {
         
         let scp_row = row.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('height', `${300}px`);
+            .style('height', `${scplot_height}px`);
         
         let stack_row = row.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('height', `${300}px`);
+            .style('height', `${scplot_height}px`);
             
         drawDetailRow(scp_row, stack_row, data, heatmap);
     })
@@ -143,21 +147,6 @@ function drawInfoArea(parentDiv, input, data) {
 
 }
 
-
-// Tooltip for heatmap
-let heatmap_tip = d3_tip().attr('class', 'd3-tip').html(function(d) { return d.mean ? d.mean : d; });
-let scatterplot_tip = d3_tip().attr('class', 'd3-tip').html(function(d) {
-    let tip_text;
-    if (d.tag_type == 'no_tag') {
-        tip_text = `input: ${d.input}`;
-    } else if (d.tag_type == 'binary') {
-        tip_text = `input: ${d.input}<br>prediction: ${d.prediction['class']}<br>probability: ${d.prediction['prob']}`;
-    } else if (d.tag_type == 'multiclass') {
-        tip_text = `input: ${d.input}<br>prediction: ${d.tag}`;
-    }
-    return tip_text; 
-});
-
 const DEFAULT_DIM_NUM = 3, DEFAULT_INST_COUNT = 3;
 const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
 
@@ -205,10 +194,9 @@ function drawSummaryArea(row_div, data) {
 
     let heatmapSvg = heatmapDrawArea.append('svg')
                         .attr('width', width + 50)
-                        .attr('height', height + 50)
-                        .call(heatmap_tip);
+                        .attr('height', height + 50);
     
-    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding, heatmap_tip, scatterplot_tip);
+    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding);
 
     // Bind event to dropdown menus
     dims_items.on('click', (d) => {
@@ -261,13 +249,13 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
         
         let scp_row = row_div.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('width', `${300 * d.heatmap_data.dims.length + 100}px`)
-            .style('height', `${300}px`);
+            .style('width', `${scplot_width * d.heatmap_data.dims.length + 100}px`)
+            .style('height', `${scplot_height}px`);
         
         let stack_row = row_div.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('width', `${300 * d.heatmap_data.dims.length + 100}px`)
-            .style('height', `${300}px`);
+            .style('width', `${scplot_width * d.heatmap_data.dims.length + 100}px`)
+            .style('height', `${scplot_height}px`);
 
         data.heatmap_data = d.heatmap_data;
         heatmap.scatterplots = [];
@@ -298,17 +286,16 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
         console.log(scp_data);
 
         // Draw scatterplots
-        const width = 300, 
+        const width = scplot_width, 
               height = scp_row.node().clientHeight, 
               padding = 30;
 
         let scp_svg = scp_row.append('svg')
             .attr('width', width)
             .attr('height', height)
-            .attr('transform', `translate(${5}, ${0})`)
-            .call(scatterplot_tip);
+            .attr('transform', `translate(${5}, ${0})`);
     
-        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding, scatterplot_tip);
+        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding);
 
         heatmap.scatterplots.push(scplot);
 
@@ -351,7 +338,7 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
             stacked_data.push(td);
         }
 
-        const sw = 300, 
+        const sw = scplot_width, 
               sh = stack_row.node().clientHeight, 
               spd = 20;
 
@@ -360,9 +347,11 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
             .attr('height', sh)
             .attr('transform', `translate(${5}, ${0})`);
         
-        let tag_keys = scp_data.tag_type == 'binary' ? ['0', '1'] : Object.keys(scp_data.tag_dict);
+        let tag_keys = scp_data.tag_type == 'binary' ? [0, 1] : Object.keys(scp_data.tag_dict);
 
-        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd);
+        let has_legend = false;
+        if (counter == 0) has_legend = true;
+        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd, scplot, has_legend);
         
         counter++;
 
