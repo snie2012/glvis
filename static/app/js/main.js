@@ -353,7 +353,7 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
 
         const sw = 300, 
               sh = stack_row.node().clientHeight, 
-              spadding = 30;
+              spd = 20;
 
         let stack_svg = stack_row.append('svg')
             .attr('width', sw)
@@ -362,7 +362,7 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
         
         let tag_keys = scp_data.tag_type == 'binary' ? ['0', '1'] : Object.keys(scp_data.tag_dict);
 
-        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh);
+        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd);
         
         counter++;
 

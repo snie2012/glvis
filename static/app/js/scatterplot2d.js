@@ -31,10 +31,10 @@ class Scatterplot2D {
         if (this.tag_type == 'binary') {
             this.colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
         } else if (this.tag_type == 'multiclass') {
-            this.colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+            this.colorScale = d3.scaleOrdinal(d3.schemeDark2);
         }
 
-        this.groupColorScale = d3.scaleOrdinal(d3.schemeCategory10);
+        this.groupColorScale = d3.scaleOrdinal(d3.schemeDark2);
 
         // Bind brush events before the creation of groups and circles to allow tooltip to show
         this.bindBrush();
