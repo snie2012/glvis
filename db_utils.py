@@ -14,7 +14,7 @@ _bert_mrpc = {
     'tag_type': 'binary'
 }
 
-_flair_sentiment = {
+_flair_sentiment_linear = {
     'input': 'sentence',
     'reps': ['val'],
     'pred': 'prediction',
@@ -51,7 +51,7 @@ _word2vec = {
     'tag_type': 'no_tag'
 }
 
-_flair_ner = {
+_flair_ner_linear = {
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -59,7 +59,7 @@ _flair_ner = {
     'tag_dict': {tag: i for i, tag in enumerate(['LOC', 'MISC', 'ORG', 'PER'])}
 }
 
-_flair_pos = {
+_flair_pos_linear = {
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -117,7 +117,7 @@ _flair_pos = {
     ])}
 }
 
-_flair_chunk = {
+_flair_chunk_linear = {
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -137,17 +137,107 @@ _flair_chunk = {
     ])}
 }
 
+_flair_ner_embedding2nn = {
+    'input': 'text',
+    'reps': ['embedding2nn'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate(['LOC', 'MISC', 'ORG', 'PER'])}
+}
+
+_flair_pos_embedding2nn = {
+    'input': 'text',
+    'reps': ['embedding2nn'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate([
+        '$',
+        "''",
+        ',',
+        '-LRB-',
+        '-RRB-',
+        '.',
+        ':',
+        'ADD',
+        'AFX',
+        'CC',
+        'CD',
+        'DT',
+        'EX',
+        'FW',
+        'HYPH',
+        'IN',
+        'JJ',
+        'JJR',
+        'JJS',
+        'LS',
+        'MD',
+        'NFP',
+        'NN',
+        'NNP',
+        'NNPS',
+        'NNS',
+        'PDT',
+        'POS',
+        'PRP',
+        'PRP$',
+        'RB',
+        'RBR',
+        'RBS',
+        'RP',
+        'SYM',
+        'TO',
+        'UH',
+        'VB',
+        'VBD',
+        'VBG',
+        'VBN',
+        'VBP',
+        'VBZ',
+        'WDT',
+        'WP',
+        'WP$',
+        'WRB',
+        'XX',
+        '``'
+    ])}
+}
+
+_flair_chunk_embedding2nn = {
+    'input': 'text',
+    'reps': ['embedding2nn'],
+    'pred': 'tag',
+    'tag_type': 'multiclass',
+    'tag_dict': {tag: i for i, tag in enumerate([
+        'VP',
+        'CONJP',
+        'PRT',
+        'ADVP',
+        'UCP',
+        'SBAR',
+        'NP',
+        'LST',
+        'PP',
+        'INTJ',
+        'ADJP'
+    ])}
+}
+
+
 DB_KEY_DICT = {
     'bert_mrpc': _bert_mrpc,
-    'flair_sentiment': _flair_sentiment,
+    'flair_sentiment_linear': _flair_sentiment_linear,
     'glove_6b_50d': _glove_6b_50d,
     'glove_6b_100d': _glove_6b_100d,
     'glove_6b_200d': _glove_6b_200d,
     'glove_6b_300d': _glove_6b_300d,
     'word2vec': _word2vec,
-    'flair_ner': _flair_ner,
-    'flair_pos': _flair_pos,
-    'flair_chunk': _flair_chunk
+    'flair_ner_linear': _flair_ner_linear,
+    'flair_pos_linear': _flair_pos_linear,
+    'flair_chunk_linear': _flair_chunk_linear,
+    'flair_ner_embedding2nn': _flair_ner_embedding2nn,
+    'flair_pos_embedding2nn': _flair_pos_embedding2nn,
+    'flair_chunk_embedding2nn': _flair_chunk_embedding2nn,
 }
 
 
