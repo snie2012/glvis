@@ -8,7 +8,7 @@
 <body>
 <div class="container-fluid" id='container'>
     <div class='row'>
-        <div class='col-2 m-1'>
+        <div class='col-3 m-1'>
             <div class="input-group mb-1">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Model Name</button>
@@ -35,13 +35,26 @@
         <div class='col-2 m-1'>
             <div class="input-group mb-1">
                 <div class="input-group-prepend">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Qery Method</button>
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Query Method</button>
                     <div class="dropdown-menu" id='query-method-list'>
                         <a class="dropdown-item">random_sample</a>
                         <a class="dropdown-item">text_match</a>
                     </div>
                 </div>
                 <input type="text" class="form-control" aria-label="Text input with dropdown button" id='query-method-input'>
+            </div>
+        </div>
+
+        <div class='col-2 m-1'>
+            <div class="input-group mb-1">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Cluster Method</button>
+                    <div class="dropdown-menu" id='cluster-method-list'>
+                        <a class="dropdown-item">hier</a>
+                        <a class="dropdown-item">kmeans</a>
+                    </div>
+                </div>
+                <input type="text" class="form-control" aria-label="Text input with dropdown button" id='cluster-method-input'>
             </div>
         </div>
     

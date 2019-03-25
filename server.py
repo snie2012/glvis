@@ -30,7 +30,7 @@ ROW_NUM = 2
 COL_NUM = 3
 
 
-def fill_model_data(query_result, model_name='bert_mrpc'):
+def fill_model_data(query_result, model_name, cluster_method):
     '''
     Operation flow:
     1. Query database to get the embeddings
@@ -65,7 +65,7 @@ def fill_model_data(query_result, model_name='bert_mrpc'):
         {'dim': i,'mean': val[0],'std': val[1]} for i, val in enumerate(zip(mean, std))
     ]
 
-    model.dim_groups, model.inst_groups = sep_clustering(model.reps)
+    model.dim_groups, model.inst_groups = sep_clustering(model.reps, cluster_method)
 
     model.heatmap_data = prepare_sep_data(model.reps, model.dim_groups, model.inst_groups, num_of_dims=COL_NUM)
 
@@ -128,15 +128,15 @@ def query_model_data():
     model_name = response['model_name']
     db_col_name = response['db_col_name']
     query_method = response['query_method']
+    query_input = response['query_input']
+    cluster_method = response['cluster_method']
 
     if query_method == 'random_sample':
-        sample_size = int(response['sample_size'])
-        print(f'Sample size: {sample_size}')
-        query_result = random_sample(sample_size, db_col_name)
+        print(f'Sample size: {query_input}')
+        query_result = random_sample(int(query_input), db_col_name)
     elif query_method == 'text_match':
-        term = response['term']
-        print(f'Query term: {term}')
-        query_result = text_match(term, db_col_name)
+        print(f'Query term: {query_input}')
+        query_result = text_match(query_input, db_col_name)
     else:
         raise Exception()
 
@@ -144,7 +144,7 @@ def query_model_data():
         abort(400, 'Empty query result')
 
     # Use the queried results to fill the ModelData class
-    model = fill_model_data(query_result, model_name)
+    model = fill_model_data(query_result, model_name, cluster_method)
 
     # Store the created and filled ModelData object to a dictionary for later use
     request_identifier = str(next(counter))

@@ -34,15 +34,23 @@ d3.select('#canvas')
 
 // Set default values for model name, query method and query term
 let model_name = 'bert_mrpc';
+let cluster_method = 'hier';
 let query_method = 'random_sample';
 d3.select('#model-name-input').property("value", model_name);
 d3.select('#query-method-input').property("value", query_method);
+d3.select('#cluster-method-input').property("value", cluster_method);
 d3.select('#query-input').property("value", 100);
 
 // Bind event to model name selector
 d3.selectAll('#model-name-list a').on('click', function() {
     model_name = d3.select(this).html();
     d3.select('#model-name-input').property("value", model_name);
+})
+
+// Bind event to cluster method selector
+d3.selectAll('#cluster-method-list a').on('click', function() {
+    cluster_method = d3.select(this).html();
+    d3.select('#cluster-method-input').property("value", cluster_method);
 })
 
 // Bind event to query method selector
@@ -57,24 +65,16 @@ d3.select('#query-button').on('click', () => {
     if (!query_input) return;
 
     console.log(`Model name: ${model_name}`);
+    console.log(`Cluster method: ${cluster_method}`);
     console.log(`Query method: ${query_method}`);
-    console.log(`Query method: ${query_input}`);
+    console.log(`Query input: ${query_input}`);
 
-    let request_data;
-    if (query_method == 'random_sample') {
-        request_data = {
-            'query_method': query_method,
-            'sample_size': query_input,
-            'model_name': model_name,
-            'db_col_name': model_name
-        }
-    } else if (query_method == 'text_match') {
-        request_data = {
-            'query_method': query_method,
-            'term': query_input,
-            'model_name': model_name,
-            'db_col_name': model_name
-        }
+    const request_data = {
+        'cluster_method': cluster_method,
+        'query_method': query_method,
+        'query_input': query_input,
+        'model_name': model_name,
+        'db_col_name': model_name
     }
     
     // Retrive subset data from a specified endpoint, then visualize the data
