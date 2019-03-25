@@ -55,8 +55,11 @@ class StackedBarChart {
 
     drawLegend() {
         const legend = d3_legend.legendColor()
-            .shapePadding(1)
             .ascending(true)
+            .shape('rect')
+            .shapeWidth(10)
+            .shapeHeight(10)
+            .shapePadding(1)
             .scale(this.colorScale);
 
         this.svg.append('g')

@@ -68,7 +68,7 @@ class Scatterplot2D {
             .append("circle")
             .attr("cx", d => this.xScale(d.coords[0]))
             .attr("cy", d => h - this.yScale(d.coords[1]))
-            .attr("r", 3)
+            .attr("r", 2)
             .attr("fill", (d) => {
                 // if (this.tag_type == 'binary') {
                 //     return this.colorScale(d.prediction['prob'])
@@ -88,7 +88,7 @@ class Scatterplot2D {
                 d3.select(this).attr('r', 5);
             })
             .on('mouseout.enlarge', function() {
-                d3.select(this).attr('r', 3);
+                d3.select(this).attr('r', 2);
             });
 
         //X axis

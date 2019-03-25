@@ -20,7 +20,7 @@ window.d3_tip = d3_tip;
 
 // Set up constants
 const scplot_width = 300;
-const scplot_height = 300;
+const scplot_height = 240;
 
 // Set height for the canvas area to support overflow scroll
 d3.select('#canvas')
