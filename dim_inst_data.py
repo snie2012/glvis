@@ -5,7 +5,7 @@ import numpy as np
 def prepare_sep_data(mat, dim_groups, inst_groups, num_of_dims, num_of_instances=None):
     num_of_dims = num_of_dims if num_of_dims < len(mat[0]) else len(mat[0])
 
-    nums_of_instances = num_of_instances if num_of_instances else [3 for _ in range(num_of_dims)]
+    nums_of_instances = num_of_instances if num_of_instances else [2 for _ in range(num_of_dims)]
     """
     What should the data look like?
     {

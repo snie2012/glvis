@@ -59,7 +59,7 @@ function createMultipleDropdowns(parentDiv, numOfSelects, numOfOptions, defaultO
         menu.button.html(`D${i+1}`);
 
         menu.dropdown.selectAll('a')
-            .data(d3.range(2, numOfOptions, 1))
+            .data(d3.range(1, numOfOptions, 1))
             .enter()
             .append('a')
             .attr('class', 'dropdown-item')

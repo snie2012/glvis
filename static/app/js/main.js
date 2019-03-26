@@ -147,7 +147,7 @@ function drawInfoArea(parentDiv, input, data) {
 
 }
 
-const DEFAULT_DIM_NUM = 3, DEFAULT_INST_COUNT = 3;
+const DEFAULT_DIM_NUM = 2, DEFAULT_INST_COUNT = 2;
 const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
 
 function drawSummaryArea(row_div, data) {
@@ -164,7 +164,7 @@ function drawSummaryArea(row_div, data) {
     dims_menu.input.attr('value', cur_dim_num);
 
     let dims_items = dims_menu.dropdown.selectAll('a')
-        .data(d3.range(2, MAX_DIM_NUM, 1))
+        .data(d3.range(1, MAX_DIM_NUM, 1))
         .enter()
         .append('a')
         .attr('class', 'dropdown-item')

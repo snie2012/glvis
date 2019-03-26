@@ -25,11 +25,6 @@ reducers = {
     'umap': umap.UMAP(n_components=2, metric='correlation')
 }
 
-# Default number of row and column clusters
-ROW_NUM = 2
-COL_NUM = 3
-
-
 def fill_model_data(query_result, model_name, cluster_method):
     '''
     Operation flow:
@@ -67,7 +62,7 @@ def fill_model_data(query_result, model_name, cluster_method):
 
     model.dim_groups, model.inst_groups = sep_clustering(model.reps, cluster_method)
 
-    model.heatmap_data = prepare_sep_data(model.reps, model.dim_groups, model.inst_groups, num_of_dims=COL_NUM)
+    model.heatmap_data = prepare_sep_data(model.reps, model.dim_groups, model.inst_groups, num_of_dims=2)
 
     return model
 

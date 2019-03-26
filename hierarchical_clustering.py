@@ -49,7 +49,7 @@ def cluster_and_group(dist_mat, max_level, linkage_type='average', group_type='m
             groups[key] = np.array([new_idx[partial_sum[i-1] : partial_sum[i]] for i in range(1, len(partial_sum))])
 
     elif group_type == 'maxclust':
-        for num_cluster in range(2, max_level):
+        for num_cluster in range(1, max_level):
             fc_num = hier.fcluster(Y, num_cluster, criterion='maxclust')
             fc_num = fc_num[new_idx] # Index fc_num according to the new order
             count = np.array([len(list(g)) for k, g in itertools.groupby(fc_num)])
