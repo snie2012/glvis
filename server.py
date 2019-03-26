@@ -147,6 +147,7 @@ def query_model_data():
 
     return jsonify(
         request_identifier=request_identifier,
+        inputs=model.inputs.tolist(),
         vectors=model.reps.tolist(),
         stats=model.stats,
         heatmap_data=model.heatmap_data

@@ -211,24 +211,25 @@ class Scatterplot2D {
 
     stackHighlight(instances, color_scale) {
         const inst_set = new Set(instances);
-        this.circles.attr('fill', (d) => {
-            let c;
+        this.circles.each(function(d) {
             if (inst_set.has(d.instance_id)) {
+                let c;
                 if (d.tag_type == 'binary') {
                     c = color_scale(d.prediction.class);
                 } else if (d.tag_type == 'multiclass') {
                     c = color_scale(d.tag);
                 }
+                d3.select(this).attr('visibility', 'visible');
+                d3.select(this).attr('fill', c);
             } else {
-                c = 'white';
+                d3.select(this).attr('visibility', 'hidden');
             }
-
-            return c;
         })
     }
 
     // Reset color if no highlight
     resetColor() {
+        this.circles.attr('visibility', 'visible');
         this.circles.attr("fill", (d) => {
             // if (this.tag_type == 'binary') {
             //     return this.colorScale(d.prediction['prob'])

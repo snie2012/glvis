@@ -97,8 +97,17 @@ d3.select('#query-button').on('click', () => {
         let stack_row = row.detail.append('div')
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
             .style('height', `${scplot_height}px`);
-            
-        drawDetailRow(scp_row, stack_row, data, heatmap);
+        
+        let wc_rows = [];
+        for (let w = 0; w < data.heatmap_data.dims.length; w++) {
+            const w_row = row.detail.append('div')
+                .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+                .style('width', `${scplot_width * data.heatmap_data.insts[w].length + 100}px`)
+                .style('height', `${scplot_height}px`);
+                wc_rows.push(w_row);
+        }
+    
+        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
     })
 })
 
@@ -136,6 +145,10 @@ function drawInfoArea(parentDiv, input, data) {
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
         .html(`Query method: <b>${query_method}</b>`);
+    
+    parentDiv.append('div')
+        .attr('class', 'col ml-1 p-0 text-center')
+        .html(`Cluster method: <b>${cluster_method}</b>`);
 
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
@@ -256,16 +269,25 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
             .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
             .style('width', `${scplot_width * d.heatmap_data.dims.length + 100}px`)
             .style('height', `${scplot_height}px`);
+        
+        let wc_rows = [];
+        for (let w=0; w < d.heatmap_data.dims.length; w++) {
+            const w_row = row_div.detail.append('div')
+                .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+                .style('width', `${scplot_width * d.heatmap_data.insts[w].length + 100}px`)
+                .style('height', `${scplot_height}px`);
+                wc_rows.push(w_row);
+        }
 
         data.heatmap_data = d.heatmap_data;
         heatmap.scatterplots = [];
-        drawDetailRow(scp_row, stack_row, data, heatmap);
+        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
     })
 }
 
 
 let counter = 0;
-function drawDetailRow(scp_row, stack_row, data, heatmap) {
+function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
     let dims_data = data.heatmap_data.dims;
     let insts_data = data.heatmap_data.insts;
     if (counter == dims_data.length) {
@@ -352,14 +374,27 @@ function drawDetailRow(scp_row, stack_row, data, heatmap) {
         let has_legend = false;
         if (counter == 0) has_legend = true;
         let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd, scplot, has_legend);
-        
+
+
+        // Draw word clouds for one set of dimensions
+        const wc_row = wc_rows[counter];
+        const wc_width = scplot_width, 
+              wc_height = wc_row.node().clientHeight, 
+              wc_padding = 20;
+        const cur_insts = data.heatmap_data.insts[counter];
+        for (let w = 0; w < cur_insts.length; w++) {
+            let wc_svg = wc_row.append('svg')
+                .attr('width', wc_width)
+                .attr('height', wc_height)
+                .attr('transform', `translate(${5}, ${0})`);
+
+            const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
+            let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
+        }
+
+        // Increment counter and do a recursive call
         counter++;
 
-        drawDetailRow(scp_row, stack_row, data, heatmap);
+        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
     })
-}
-
-
-function stackBarData(d) {
-
 }

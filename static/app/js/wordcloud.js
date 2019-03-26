@@ -1,43 +1,21 @@
-import * as cloud from "d3-cloud";
+import * as d3_cloud from "d3-cloud";
 import * as _ from "lodash";
 
 class WordCloud {
-    constructor(words_matrix, svg, width, height, padding) {
+    constructor(words, svg, width, height, padding) {
         this.svg = svg;
         this.padding = padding;
-        this.words_matrix = words_matrix;
+        this.words = words.map((d) => {return {'text': d, 'size': 15}});
 
-        this.layout = cloud()
+        this.layout = d3_cloud()
             .size([width, height])
-            .padding(3)
+            .words(this.words)
+            .padding(2)
+            .rotate(0)
             .font("Impact")
             .fontSize(function(d) { return d.size; })
             .on("end", this.draw.bind(this));
-    }
 
-    // Calculate the size of each word based on their frequency
-    prepareData(words_matrix) {
-        const flattend = _.flatten(words_matrix);
-        const counter = _.countBy(flattend);
-        const size_data = Object.entries(counter).map(([k, v]) => {
-            return {'text': k, 'size': v};
-        });
-        const min = _.minBy(size_data, 'size')['size'];
-        const max = _.maxBy(size_data, 'size')['size'];
-        const scale = max - min;
-        return size_data.map((elm) => {
-            return {'text': elm['text'], 'size': 10 + 60 * (elm['size'] - min) / scale};
-        });
-    }
-
-    // Reset the data to be drawn
-    setData(selectedIds) {
-        if (selectedIds.length == 0) return;
-        const selectedData = selectedIds.map(id => this.words_matrix[id]);
-        this.drawData = this.prepareData(selectedData);
-        this.layout
-            .words(this.drawData)
-            .rotate(function() { return (~~(Math.random() * 6) - 3) * 30; });
         this.layout.start();
     }
 
@@ -48,18 +26,16 @@ class WordCloud {
             .attr("width", this.layout.size()[0])
             .attr("height", this.layout.size()[1])
           .append("g")
-            .attr("transform", "translate(" + this.layout.size()[0] / 2 + "," + this.layout.size()[1] / 2 + ")")
+            .attr("transform", `translate(${this.layout.size()[0] / 2}, ${this.layout.size()[1] / 2})`)
         
         this.g.selectAll("text")
             .data(data)
           .enter().append("text")
-            .style("font-size", function(d) { return d.size + "px"; })
+            .style("font-size", d => `${d.size}px`)
             .style("font-family", "Impact")
             .attr("text-anchor", "middle")
-            .attr("transform", function(d) {
-              return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-            })
-            .text(function(d) { return d.text; });
+            .attr("transform", d => `translate(${d.x}, ${d.y})rotate(${d.rotate})`)
+            .text(d => d.text);
     }
 }
 
