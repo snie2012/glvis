@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.manifold import TSNE
+from tsnecuda import TSNE
 import umap
 import itertools
 
