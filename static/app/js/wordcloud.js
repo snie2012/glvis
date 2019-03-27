@@ -5,7 +5,7 @@ class WordCloud {
     constructor(words, svg, width, height, padding) {
         this.svg = svg;
         this.padding = padding;
-        this.words = words.map((d) => {return {'text': d, 'size': 15}});
+        this.words = _.shuffle(words.map((d) => {return {'text': d, 'size': 15}}));
 
         this.layout = d3_cloud()
             .size([width, height])

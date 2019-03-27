@@ -8,6 +8,7 @@ db = client['glvis_db']
 
 
 _bert_mrpc = {
+    'input_type': 'sentence',
     'input': 'sentence',
     'reps': ['cls_token', 'reduce_mean'],
     'pred': 'prediction',
@@ -15,6 +16,7 @@ _bert_mrpc = {
 }
 
 _flair_sentiment_linear = {
+    'input_type': 'sentence',
     'input': 'sentence',
     'reps': ['val'],
     'pred': 'prediction',
@@ -22,36 +24,42 @@ _flair_sentiment_linear = {
 }
 
 _glove_6b_50d = {
+    'input_type': 'word',
     'input': 'word',
     'reps': ['embedding'],
     'tag_type': 'no_tag'
 }
 
 _glove_6b_100d = {
+    'input_type': 'word',
     'input': 'word',
     'reps': ['embedding'],
     'tag_type': 'no_tag'
 }
 
 _glove_6b_200d = {
+    'input_type': 'word',
     'input': 'word',
     'reps': ['embedding'],
     'tag_type': 'no_tag'
 }
 
 _glove_6b_300d = {
+    'input_type': 'word',
     'input': 'word',
     'reps': ['embedding'],
     'tag_type': 'no_tag'
 }
 
 _word2vec = {
+    'input_type': 'word',
     'input': 'word',
     'reps': ['embedding'],
     'tag_type': 'no_tag'
 }
 
 _flair_ner_linear = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -60,6 +68,7 @@ _flair_ner_linear = {
 }
 
 _flair_pos_linear = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -118,6 +127,7 @@ _flair_pos_linear = {
 }
 
 _flair_chunk_linear = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['linear_layer_state'],
     'pred': 'tag',
@@ -138,6 +148,7 @@ _flair_chunk_linear = {
 }
 
 _flair_ner_embedding2nn = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['embedding2nn'],
     'pred': 'tag',
@@ -146,6 +157,7 @@ _flair_ner_embedding2nn = {
 }
 
 _flair_pos_embedding2nn = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['embedding2nn'],
     'pred': 'tag',
@@ -204,6 +216,7 @@ _flair_pos_embedding2nn = {
 }
 
 _flair_chunk_embedding2nn = {
+    'input_type': 'word',
     'input': 'text',
     'reps': ['embedding2nn'],
     'pred': 'tag',

@@ -9,6 +9,7 @@ import {createDropdownInput, createMultipleDropdowns} from "./ui_helper";
 import {postJson} from "./util";
 
 import {WordCloud} from "./wordcloud";
+import {SentenceCloud} from "./sentencecloud";
 import {Histogram} from "./histogram";
 import {SepHeatmap} from './sep_heatmap';
 import {Scatterplot2D} from './scatterplot2d';
@@ -21,6 +22,8 @@ window.d3_tip = d3_tip;
 // Set up constants
 const scplot_width = 300;
 const scplot_height = 240;
+const wcplot_width = 500;
+const wcplot_height = 500;
 
 // Set height for the canvas area to support overflow scroll
 d3.select('#canvas')
@@ -36,9 +39,11 @@ d3.select('#canvas')
 let model_name = 'bert_mrpc';
 let cluster_method = 'hier';
 let query_method = 'random_sample';
+let dm_method = 'umap';
 d3.select('#model-name-input').property("value", model_name);
 d3.select('#query-method-input').property("value", query_method);
 d3.select('#cluster-method-input').property("value", cluster_method);
+d3.select('#dm-method-input').property("value", dm_method);
 d3.select('#query-input').property("value", 100);
 
 // Bind event to model name selector
@@ -57,6 +62,12 @@ d3.selectAll('#cluster-method-list a').on('click', function() {
 d3.selectAll('#query-method-list a').on('click', function() {
     query_method = d3.select(this).html();
     d3.select('#query-method-input').property("value", query_method);
+})
+
+// Bind event to dm method selector
+d3.selectAll('#dm-method-list a').on('click', function() {
+    dm_method = d3.select(this).html();
+    d3.select('#dm-method-input').property("value", dm_method);
 })
 
 // Bind query event
@@ -102,8 +113,8 @@ d3.select('#query-button').on('click', () => {
         for (let w = 0; w < data.heatmap_data.dims.length; w++) {
             const w_row = row.detail.append('div')
                 .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-                .style('width', `${scplot_width * data.heatmap_data.insts[w].length + 100}px`)
-                .style('height', `${scplot_height}px`);
+                .style('width', `${wcplot_width * data.heatmap_data.insts[w].length + 100}px`)
+                .style('height', `${wcplot_height}px`);
                 wc_rows.push(w_row);
         }
     
@@ -274,8 +285,8 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
         for (let w=0; w < d.heatmap_data.dims.length; w++) {
             const w_row = row_div.detail.append('div')
                 .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-                .style('width', `${scplot_width * d.heatmap_data.insts[w].length + 100}px`)
-                .style('height', `${scplot_height}px`);
+                .style('width', `${wcplot_width * d.heatmap_data.insts[w].length + 100}px`)
+                .style('height', `${wcplot_height}px`);
                 wc_rows.push(w_row);
         }
 
@@ -301,7 +312,7 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
         'request_identifier': data.request_identifier,
         'instances': instances,
         'dimensions': dims_data[counter].dimensions,
-        'dm_method': 'umap'
+        'dm_method': dm_method
     }
 
     postJson('/dimension_reduction', request_data).then((scp_data) => {
@@ -378,7 +389,7 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
 
         // Draw word clouds for one set of dimensions
         const wc_row = wc_rows[counter];
-        const wc_width = scplot_width, 
+        const wc_width = wcplot_width, 
               wc_height = wc_row.node().clientHeight, 
               wc_padding = 20;
         const cur_insts = data.heatmap_data.insts[counter];
@@ -388,8 +399,13 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
                 .attr('height', wc_height)
                 .attr('transform', `translate(${5}, ${0})`);
 
-            const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
-            let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
+            if (data.input_type == 'word') {
+                const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
+                let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
+            } else if (data.input_type == 'sentence') {
+                const cleaned_sentences = cur_insts[w].instances.map(idx => data.cleaned_inputs[idx]);
+                let wc = new SentenceCloud(cleaned_sentences, wc_svg, wc_width, wc_height, wc_padding);
+            }
         }
 
         // Increment counter and do a recursive call

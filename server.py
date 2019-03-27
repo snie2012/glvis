@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-from tsnecuda import TSNE
+# from sklearn.manifold import TSNE
+# from tsnecuda import TSNE
+from MulticoreTSNE import MulticoreTSNE as TSNE
 import umap
 import itertools
 
@@ -21,7 +23,7 @@ counter = itertools.count() # Counter to keep track of each subset request
 data_dict = {} # Dictionary to store all the calculated data for each subset request
 
 reducers = {
-    'tsne': TSNE(n_components=2),
+    'tsne': TSNE(n_components=2, n_jobs=8),
     'umap': umap.UMAP(n_components=2, metric='correlation')
 }
 
@@ -37,7 +39,10 @@ def fill_model_data(query_result, model_name, cluster_method):
     model = ModelData(model_name)
     db_keys = DB_KEY_DICT[model_name]
 
+    model.input_type = db_keys['input_type']
     model.inputs = np.array([item[db_keys['input']] for item in query_result])
+    if model.input_type == 'sentence':
+        model.cleaned_inputs = [clean_text(s) for s in model.inputs]
     model.reps = np.array([item[db_keys['reps'][0]] for item in query_result])
 
     # Check whether the model's tag_type (prediction, binary, multiclass)
@@ -83,6 +88,7 @@ def serve_dimension_reduction():
     dimensions = response['dimensions']
     reps = model.reps[instances_flatten, :][:, dimensions]
     
+    print(f'Using: {dm_method}')
     print(f'Perform dimension reduction on shape: {reps.shape}')
     coords = reducers[dm_method].fit_transform(reps)
 
@@ -147,7 +153,9 @@ def query_model_data():
 
     return jsonify(
         request_identifier=request_identifier,
+        input_type=model.input_type,
         inputs=model.inputs.tolist(),
+        cleaned_inputs=model.cleaned_inputs if model.input_type == 'sentence' else 'no cleaned input',
         vectors=model.reps.tolist(),
         stats=model.stats,
         heatmap_data=model.heatmap_data

@@ -8,8 +8,8 @@
 <body>
 <div class="container-fluid" id='container'>
     <div class='row'>
-        <div class='col-3 m-1'>
-            <div class="input-group mb-1">
+        <div class='col-2 m-1'>
+            <div class="input-group input-group-sm mb-1">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Model Name</button>
                     <div class="dropdown-menu" id='model-name-list'>
@@ -32,8 +32,8 @@
             </div>
         </div>
 
-        <div class='col-3 m-1'>
-            <div class="input-group mb-1">
+        <div class='col-2 m-1'>
+            <div class="input-group input-group-sm mb-1">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Query Method</button>
                     <div class="dropdown-menu" id='query-method-list'>
@@ -46,7 +46,7 @@
         </div>
 
         <div class='col-2 m-1'>
-            <div class="input-group mb-1">
+            <div class="input-group input-group-sm mb-1">
                 <div class="input-group-prepend">
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Cluster Method</button>
                     <div class="dropdown-menu" id='cluster-method-list'>
@@ -57,9 +57,22 @@
                 <input type="text" class="form-control" aria-label="Text input with dropdown button" id='cluster-method-input'>
             </div>
         </div>
+
+        <div class='col-2 m-1'>
+            <div class="input-group input-group-sm mb-1">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">DM Method</button>
+                    <div class="dropdown-menu" id='dm-method-list'>
+                        <a class="dropdown-item">umap</a>
+                        <a class="dropdown-item">tsne</a>
+                    </div>
+                </div>
+                <input type="text" class="form-control" aria-label="Text input with dropdown button" id='dm-method-input'>
+            </div>
+        </div>
     
         <div class='col-2 m-1' id='query-area'>
-            <div class="input-group mb-1">
+            <div class="input-group input-group-sm mb-1">
                 <input type="text" class="form-control" id='query-input' placeholder="Query term" aria-label="Query term" aria-describedby="button-addon2">
                 <div class="input-group-append">
                     <button class="btn btn-outline-secondary" type="button" id="query-button">Query</button>
