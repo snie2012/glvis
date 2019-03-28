@@ -41,12 +41,12 @@ class Scatterplot2D {
         this.yAxis = d3.axisLeft().scale(this.yScale).ticks(10);
 
         // Define color scale
-        this.colorScale = null;
-        if (this.tag_type == 'binary') {
-            this.colorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
-        } else if (this.tag_type == 'multiclass') {
-            this.colorScale = d3.scaleOrdinal(d3.schemeDark2);
-        }
+        this.classColorScale = d3.scaleOrdinal(d3.schemeDark2);;
+        // if (this.tag_type == 'binary') {
+        //     this.classColorScale = d3.scaleSequential(d3.interpolateRdBu).domain([-1, 1]);
+        // } else if (this.tag_type == 'multiclass') {
+        //     this.classColorScale = d3.scaleOrdinal(d3.schemeDark2);
+        // }
 
         this.groupColorScale = d3.scaleOrdinal(d3.schemeDark2);
 
@@ -70,14 +70,14 @@ class Scatterplot2D {
             .attr("cy", d => h - this.yScale(d.coords[1]))
             .attr("r", 2)
             .attr("fill", (d) => {
-                // if (this.tag_type == 'binary') {
-                //     return this.colorScale(d.prediction['prob'])
-                // } else if (this.tag_type == 'multiclass') {
-                //     return this.colorScale(d.prediction);
-                // } else if (this.tag_type == 'no_tag') {
-                //     return '#beaed4';
-                // }
-                return this.groupColorScale(d.group_id);
+                if (this.tag_type == 'binary') {
+                    return this.classColorScale(d.prediction['prob'] > 0 ? 0 : 1)
+                } else if (this.tag_type == 'multiclass') {
+                    return this.classColorScale(d.prediction);
+                } else if (this.tag_type == 'no_tag') {
+                    return '#beaed4';
+                }
+                // return this.groupColorScale(d.group_id);
                     
             })
             // .style("stroke", 'black')
@@ -231,14 +231,14 @@ class Scatterplot2D {
     resetColor() {
         this.circles.attr('visibility', 'visible');
         this.circles.attr("fill", (d) => {
-            // if (this.tag_type == 'binary') {
-            //     return this.colorScale(d.prediction['prob'])
-            // } else if (this.tag_type == 'multiclass') {
-            //     return this.colorScale(d.prediction);
-            // } else if (this.tag_type == 'no_tag') {
-            //     return '#beaed4';
-            // }
-            return this.groupColorScale(d.group_id);
+            if (this.tag_type == 'binary') {
+                return this.classColorScale(d.prediction['prob'] > 0 ? 0 : 1)
+            } else if (this.tag_type == 'multiclass') {
+                return this.classColorScale(d.prediction);
+            } else if (this.tag_type == 'no_tag') {
+                return '#beaed4';
+            }
+            // return this.groupColorScale(d.group_id);
         })
     }
 }
