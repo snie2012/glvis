@@ -43,6 +43,8 @@ def fill_model_data(query_result, model_name, cluster_method):
     model.inputs = np.array([item[db_keys['input']] for item in query_result])
     if model.input_type == 'sentence':
         model.cleaned_inputs = [clean_text(s) for s in model.inputs]
+    model.inputs_length = [len(item.split(' ')) for item in model.inputs]
+
     model.reps = np.array([item[db_keys['reps'][0]] for item in query_result])
 
     # Check whether the model's tag_type (prediction, binary, multiclass)
@@ -155,6 +157,7 @@ def query_model_data():
         request_identifier=request_identifier,
         input_type=model.input_type,
         inputs=model.inputs.tolist(),
+        inputs_length=model.inputs_length,
         cleaned_inputs=model.cleaned_inputs if model.input_type == 'sentence' else 'no cleaned input',
         vectors=model.reps.tolist(),
         stats=model.stats,

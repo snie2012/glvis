@@ -10,6 +10,7 @@ import {postJson} from "./util";
 
 import {WordCloud} from "./wordcloud";
 import {SentenceCloud} from "./sentencecloud";
+import {TextFingerprint} from "./text_fingerprint";
 import {Histogram} from "./histogram";
 import {SepHeatmap} from './sep_heatmap';
 import {Scatterplot2D} from './scatterplot2d';
@@ -328,7 +329,8 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
 
 
         // Draw word clouds for one set of dimensions
-        drawWordClouds(counter, data, wc_rows);
+        // drawWordClouds(counter, data, wc_rows);
+        drawTextFingerprints(counter, data, wc_rows);
 
         // Increment counter and do a recursive call
         counter++;
@@ -429,5 +431,32 @@ function drawWordClouds(counter, data, wc_rows) {
             const cleaned_sentences = cur_insts[w].instances.map(idx => data.cleaned_inputs[idx]);
             let wc = new SentenceCloud(cleaned_sentences, wc_svg, wc_width, wc_height, wc_padding);
         }
+    }
+}
+
+
+function drawTextFingerprints(counter, data, wc_rows) {
+    const wc_row = wc_rows[counter];
+    const wc_width = wcplot_width, 
+          wc_height = wc_row.node().clientHeight, 
+          wc_padding = 10;
+    
+    const extent = [-1, d3.extent(data.inputs_length)[1]];
+
+    const cur_insts = data.heatmap_data.insts[counter];
+    for (let w = 0; w < cur_insts.length; w++) {
+        let wc_svg = wc_row.append('svg')
+            .attr('width', wc_width)
+            .attr('height', wc_height)
+            .attr('transform', `translate(${5}, ${0})`);
+
+        const stats = cur_insts[w].instances.map((idx) => {
+            return {
+                'input': data.inputs[idx],
+                'value': data.inputs_length[idx]
+            }
+        });
+
+        let fingerprint = new TextFingerprint(stats, wc_svg, wc_width, wc_height, wc_padding, extent);
     }
 }
