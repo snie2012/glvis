@@ -282,7 +282,7 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
             .style('height', `${scplot_height}px`);
         
         let wc_rows = [];
-        for (let w=0; w < d.heatmap_data.dims.length; w++) {
+        for (let w = 0; w < d.heatmap_data.dims.length; w++) {
             const w_row = row_div.detail.append('div')
                 .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
                 .style('width', `${wcplot_width * d.heatmap_data.insts[w].length + 100}px`)
@@ -306,7 +306,7 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
         return;
     }
 
-    // Draw scatterplot
+    // Request data
     const instances = insts_data[counter].map(d => d.instances);
     const request_data = {
         'request_identifier': data.request_identifier,
@@ -319,98 +319,115 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
         console.log(scp_data);
 
         // Draw scatterplots
-        const width = scplot_width, 
-              height = scp_row.node().clientHeight, 
-              padding = 30;
-
-        let scp_svg = scp_row.append('svg')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('transform', `translate(${5}, ${0})`);
-    
-        let scplot = new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding);
+        const scplot = drawScplots(scp_data, scp_row, heatmap);
 
         heatmap.scatterplots.push(scplot);
 
         // Draw stacked bars
-        // Process scp_data to be used for stacked bars
-        if (scp_data.tag_type == 'no_tag') return;
-
-        let cur_len = 0;
-        let psum = [0];
-        for (let i = 0; i < instances.length; i++) {
-            cur_len += instances[i].length;
-            psum.push(cur_len);
-        }
-
-        let stacked_data = [];
-        for (let gid = 0; gid < psum.length - 1; gid++) {
-            let td = {};
-            td.group_id = gid;
-            td.total = instances[gid].length;
-            td.instances = instances[gid];
-
-            if (scp_data.tag_type == 'binary') {
-                td['0'] = 0;
-                td['1'] = 0;
-            } else if (scp_data.tag_type == 'multiclass') {
-                for (let tag in scp_data.tag_dict) {
-                    td[tag] = 0;
-                }
-            }
-
-            for (let si = psum[gid]; si < psum[gid+1]; si++) {
-                const d = scp_data.plot_data[si];
-                if (scp_data.tag_type == 'binary') {
-                    td[d.prediction.class] += 1
-                } else if (scp_data.tag_type == 'multiclass') {
-                    td[d.tag] += 1;
-                }
-            }
-
-            stacked_data.push(td);
-        }
-
-        const sw = scplot_width, 
-              sh = stack_row.node().clientHeight, 
-              spd = 20;
-
-        let stack_svg = stack_row.append('svg')
-            .attr('width', sw)
-            .attr('height', sh)
-            .attr('transform', `translate(${5}, ${0})`);
-        
-        let tag_keys = scp_data.tag_type == 'binary' ? [0, 1] : Object.keys(scp_data.tag_dict);
-
-        let has_legend = false;
-        if (counter == 0) has_legend = true;
-        let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd, scplot, has_legend);
+        drawStackedBars(instances, scp_data, scplot, stack_row);
 
 
         // Draw word clouds for one set of dimensions
-        const wc_row = wc_rows[counter];
-        const wc_width = wcplot_width, 
-              wc_height = wc_row.node().clientHeight, 
-              wc_padding = 20;
-        const cur_insts = data.heatmap_data.insts[counter];
-        for (let w = 0; w < cur_insts.length; w++) {
-            let wc_svg = wc_row.append('svg')
-                .attr('width', wc_width)
-                .attr('height', wc_height)
-                .attr('transform', `translate(${5}, ${0})`);
-
-            if (data.input_type == 'word') {
-                const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
-                let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
-            } else if (data.input_type == 'sentence') {
-                const cleaned_sentences = cur_insts[w].instances.map(idx => data.cleaned_inputs[idx]);
-                let wc = new SentenceCloud(cleaned_sentences, wc_svg, wc_width, wc_height, wc_padding);
-            }
-        }
+        drawWordClouds(counter, data, wc_rows);
 
         // Increment counter and do a recursive call
         counter++;
 
         drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
     })
+}
+
+function drawScplots(scp_data, scp_row) {
+    // Draw scatterplots
+    const width = scplot_width, 
+          height = scp_row.node().clientHeight, 
+          padding = 30;
+
+    let scp_svg = scp_row.append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('transform', `translate(${5}, ${0})`);
+
+    return new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding);
+}
+
+
+function drawStackedBars(instances, scp_data, scplot, stack_row) {
+    // Draw stacked bars
+    // Process scp_data to be used for stacked bars
+    if (scp_data.tag_type == 'no_tag') return;
+
+    let cur_len = 0;
+    let psum = [0];
+    for (let i = 0; i < instances.length; i++) {
+        cur_len += instances[i].length;
+        psum.push(cur_len);
+    }
+
+    let stacked_data = [];
+    for (let gid = 0; gid < psum.length - 1; gid++) {
+        let td = {};
+        td.group_id = gid;
+        td.total = instances[gid].length;
+        td.instances = instances[gid];
+
+        if (scp_data.tag_type == 'binary') {
+            td['0'] = 0;
+            td['1'] = 0;
+        } else if (scp_data.tag_type == 'multiclass') {
+            for (let tag in scp_data.tag_dict) {
+                td[tag] = 0;
+            }
+        }
+
+        for (let si = psum[gid]; si < psum[gid+1]; si++) {
+            const d = scp_data.plot_data[si];
+            if (scp_data.tag_type == 'binary') {
+                td[d.prediction.class] += 1
+            } else if (scp_data.tag_type == 'multiclass') {
+                td[d.tag] += 1;
+            }
+        }
+
+        stacked_data.push(td);
+    }
+
+    const sw = scplot_width, 
+          sh = stack_row.node().clientHeight, 
+          spd = 20;
+
+    let stack_svg = stack_row.append('svg')
+        .attr('width', sw)
+        .attr('height', sh)
+        .attr('transform', `translate(${5}, ${0})`);
+    
+    let tag_keys = scp_data.tag_type == 'binary' ? [0, 1] : Object.keys(scp_data.tag_dict);
+
+    let has_legend = false;
+    if (counter == 0) has_legend = true;
+    let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd, scplot, has_legend);
+}
+
+
+function drawWordClouds(counter, data, wc_rows) {
+    // Draw word clouds for one set of dimensions
+    const wc_row = wc_rows[counter];
+    const wc_width = wcplot_width, 
+          wc_height = wc_row.node().clientHeight, 
+          wc_padding = 20;
+    const cur_insts = data.heatmap_data.insts[counter];
+    for (let w = 0; w < cur_insts.length; w++) {
+        let wc_svg = wc_row.append('svg')
+            .attr('width', wc_width)
+            .attr('height', wc_height)
+            .attr('transform', `translate(${5}, ${0})`);
+
+        if (data.input_type == 'word') {
+            const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
+            let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
+        } else if (data.input_type == 'sentence') {
+            const cleaned_sentences = cur_insts[w].instances.map(idx => data.cleaned_inputs[idx]);
+            let wc = new SentenceCloud(cleaned_sentences, wc_svg, wc_width, wc_height, wc_padding);
+        }
+    }
 }
