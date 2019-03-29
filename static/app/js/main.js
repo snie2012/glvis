@@ -2,7 +2,6 @@ import "../css/main.scss";
 import "../css/tooltip.css";
 
 import * as d3 from "d3";
-import d3_tip from "d3-tip";
 import 'bootstrap';
 
 import {createDropdownInput, createMultipleDropdowns} from "./ui_helper";
@@ -11,7 +10,6 @@ import {postJson} from "./util";
 import {WordCloud} from "./wordcloud";
 import {SentenceCloud} from "./sentencecloud";
 import {TextFingerprint} from "./text_fingerprint";
-import {Histogram} from "./histogram";
 import {SepHeatmap} from './sep_heatmap';
 import {Scatterplot2D} from './scatterplot2d';
 import {StackedBarChart} from './stacked_bar_chart';
@@ -42,6 +40,7 @@ let model_name = 'bert_mrpc';
 let cluster_method = 'hier';
 let query_method = 'random_sample';
 let dm_method = 'umap';
+let query_input = 100;
 d3.select('#model-name-input').property("value", model_name);
 d3.select('#query-method-input').property("value", query_method);
 d3.select('#cluster-method-input').property("value", cluster_method);
@@ -74,7 +73,7 @@ d3.selectAll('#dm-method-list a').on('click', function() {
 
 // Bind query event
 d3.select('#query-button').on('click', () => {
-    const query_input = d3.select('#query-input').property('value');
+    query_input = d3.select('#query-input').property('value');
     if (!query_input) return;
 
     console.log(`Model name: ${model_name}`);
@@ -89,18 +88,20 @@ d3.select('#query-button').on('click', () => {
         'model_name': model_name,
         'db_col_name': model_name
     }
-    
-    // Retrive subset data from a specified endpoint, then visualize the data
-    postJson('/query_model_data', request_data).then(data => {
-        console.log(data);
-        let row = createRow();
-        drawInfoArea(row.info, query_input, data);
-        let heatmap = drawSummaryArea(row, data);
 
-        const plot_rows = createDetailRows(row, data.heatmap_data);
-        drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
-    })
+    startDraw(request_data);
 })
+
+async function startDraw(request_data) {
+    let row = createRow();
+    let data = await postJson('./query_model_data', request_data);
+    console.log(data);
+
+    drawInfoArea(row.info, data);
+    let heatmap = drawSummaryArea(row, data);
+    const plot_rows = createDetailRows(row, data.heatmap_data);
+    drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
+}
 
 
 function createRow() {
@@ -157,7 +158,7 @@ function createDetailRows(row_div, heatmap_data) {
     return [scp_row, stack_row, wc_rows];
 }
 
-function drawInfoArea(parentDiv, input, data) {
+function drawInfoArea(parentDiv, data) {
     // Create rows to display the query info
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
@@ -173,7 +174,7 @@ function drawInfoArea(parentDiv, input, data) {
 
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
-        .html(`Query input: <b>${input}</b>`);
+        .html(`Query input: <b>${query_input}</b>`);
 
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
@@ -273,28 +274,28 @@ function drawHeatmap(summary_div, data) {
 }
 
 
-function drawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
+async function drawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
     const request_data = {
         'request_identifier': heatmap.request_identifier,
         'dim_num': cur_dim_num,
         'insts_nums': cur_insts_recorder
     }
-    
-    postJson('/heatmap_data', request_data).then(d => {
-        data.heatmap_data = d.heatmap_data;
-        
-        // Redraw heatmap
-        heatmap.draw(d.heatmap_data);
 
-        // Redraw detail area
-        const plot_rows = createDetailRows(row_div, d.heatmap_data);
-        drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
-    })
+    const d = await postJson('/heatmap_data', request_data);
+
+    data.heatmap_data = d.heatmap_data;
+        
+    // Redraw heatmap
+    heatmap.draw(d.heatmap_data);
+
+    // Redraw detail area
+    const plot_rows = createDetailRows(row_div, d.heatmap_data);
+    drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
 }
 
 
 let counter = 0;
-function drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap) {
+async function drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap) {
     let dims_data = data.heatmap_data.dims;
     let insts_data = data.heatmap_data.insts;
     if (counter == dims_data.length) {
@@ -337,31 +338,57 @@ function drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap) {
         'dimensions': dims_data[counter].dimensions
     }
 
-    postJson('/dimension_reduction', request_data).then((dm_data) => {
-        console.log(dm_data);
+    const dm_data = await postJson('/dimension_reduction', request_data);
 
-        const scp_data = plot_data.map((d) => {
-            d['coords'] = dm_data.coords[d['instance_id']];
-            return d;
-        });
+    console.log(dm_data);
 
-        // Draw scatterplots
-        const scplot = drawScplots(data, scp_data, scp_row);
+    const scp_data = plot_data.map((d) => {
+        d['coords'] = dm_data.coords[d['instance_id']];
+        return d;
+    });
 
-        heatmap.scatterplots.push(scplot);
+    // Draw scatterplots
+    const scplot = drawScplots(data, scp_data, scp_row);
 
-        // Draw stacked bars
-        drawStackedBars(instances, data, scp_data, scplot, stack_row);
+    heatmap.scatterplots.push(scplot);
 
-        // Draw word clouds for one set of dimensions
-        drawWordClouds(counter, data, wc_rows);
-        // drawTextFingerprints(counter, data, wc_rows);
+    // Draw stacked bars
+    drawStackedBars(instances, data, scp_data, scplot, stack_row);
 
-        // Increment counter and do a recursive call
-        counter++;
+    // Draw word clouds for one set of dimensions
+    drawWordClouds(counter, data, wc_rows);
+    // drawTextFingerprints(counter, data, wc_rows);
 
-        drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap);
-    })
+    // Increment counter and do a recursive call
+    counter++;
+
+    drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap);
+
+    // postJson('/dimension_reduction', request_data).then((dm_data) => {
+    //     console.log(dm_data);
+
+    //     const scp_data = plot_data.map((d) => {
+    //         d['coords'] = dm_data.coords[d['instance_id']];
+    //         return d;
+    //     });
+
+    //     // Draw scatterplots
+    //     const scplot = drawScplots(data, scp_data, scp_row);
+
+    //     heatmap.scatterplots.push(scplot);
+
+    //     // Draw stacked bars
+    //     drawStackedBars(instances, data, scp_data, scplot, stack_row);
+
+    //     // Draw word clouds for one set of dimensions
+    //     drawWordClouds(counter, data, wc_rows);
+    //     // drawTextFingerprints(counter, data, wc_rows);
+
+    //     // Increment counter and do a recursive call
+    //     counter++;
+
+    //     drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap);
+    // })
 }
 
 
