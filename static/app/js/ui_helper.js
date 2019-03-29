@@ -47,7 +47,7 @@ function createDropdownInput(parentDiv) {
     }
 }
 
-function createMultipleDropdowns(parentDiv, numOfSelects, numOfOptions, defaultOption, insts_recorder, buttonText) {
+function createMultipleDropdowns(parentDiv, numOfSelects, numOfOptions, defaultOption, insts_recorder) {
     let select_div = parentDiv.append('div').attr('class', 'row m-0 p-0 d-0');
 
     for (let i = 0; i < numOfSelects; i++) {
@@ -71,14 +71,6 @@ function createMultipleDropdowns(parentDiv, numOfSelects, numOfOptions, defaultO
         
         menu.input.attr('value', defaultOption);
     }
-
-    const button = parentDiv.append('div')
-        .attr('class', 'row m-0 p-0 d-0')
-        .append('button')
-        .attr('class', 'btn btn-outline-secondary btn-sm')
-        .html(buttonText);
-
-    return button;
 }
 
 export {createDropdownMenu, createDropdownInput, createMultipleDropdowns}

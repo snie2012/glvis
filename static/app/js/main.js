@@ -18,7 +18,6 @@ import {StackedBarChart} from './stacked_bar_chart';
 
 // Expose d3 to the global scope (used for debugging)
 window.d3 = d3;
-window.d3_tip = d3_tip;
 
 // Set up constants
 const scplot_width = 300;
@@ -188,12 +187,12 @@ function drawSummaryArea(row_div, data) {
     let cur_dim_num = DEFAULT_DIM_NUM;
     let cur_insts_recorder = _.fill(Array(DEFAULT_DIM_NUM), DEFAULT_INST_COUNT);
 
-    // Create dropdown lists to control the number of clusters of the heatmap
+    // Create dropdown lists to control the number of dimension subsets
     let dims_div =  row_div.summary.append('div')
         .attr('class', 'row m-1');
     
     let dims_menu = createDropdownInput(dims_div);
-    dims_menu.button.html('Dims');
+    dims_menu.button.html('Dimension Subsets');
     dims_menu.input.attr('value', cur_dim_num);
 
     let dims_items = dims_menu.dropdown.selectAll('a')
@@ -204,33 +203,14 @@ function drawSummaryArea(row_div, data) {
         .html(d => d);
     
     // Menu for instances
-    let insts_parent_div =  row_div.summary.append('div')
+    let insts_parent_div = row_div.summary.append('div')
         .attr('class', 'row m-1');
     
     let insts_div = insts_parent_div.append('div')
-        .attr('class', 'row m-1');
+        .attr('class', 'row m-0');
 
-    let recfg_button = createMultipleDropdowns(insts_div, DEFAULT_DIM_NUM, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder, 'Reconfigure');
+    createMultipleDropdowns(insts_div, DEFAULT_DIM_NUM, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder);
     
-    // Draw heatmap for the selected subset
-
-    // Clear dimension draw area if it already exists
-    // Set height for the dimension area to support overflow scroll
-    let heatmapDrawArea = row_div.summary.append('div')
-        .attr('class', 'row m-3')
-        .style('height', 500 + 'px');
-
-    // width, height and padding for scatterplot svg
-    const width = heatmapDrawArea.node().clientWidth - 100;
-    const height = heatmapDrawArea.node().clientHeight - 100; 
-    const padding = 20;
-
-    let svg = heatmapDrawArea.append('svg')
-                        .attr('width', width + 50)
-                        .attr('height', height + 50);
-    
-    let heatMap = new SepHeatmap(data, svg, width, height, padding);
-
     // Bind event to dropdown menus
     dims_items.on('click', (d) => {
         // Ignore if the same row is selected
@@ -245,24 +225,55 @@ function drawSummaryArea(row_div, data) {
 
         if (insts_div) insts_div.remove();
         insts_div =  insts_parent_div.append('div')
-            .attr('class', 'row m-1');
+            .attr('class', 'row m-0');
 
-        let recreated_button = createMultipleDropdowns(insts_div, cur_dim_num, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder, 'Reconfigure');
-
-        recreated_button.on('click', () => {
-            reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
-        })
+        createMultipleDropdowns(insts_div, cur_dim_num, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder);
     });
 
-    recfg_button.on('click', () => {
-        reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
+    // Draw reconfigure button
+    let redraw_button = row_div.summary.append('div')
+        .attr('class', 'row m-1 p-0 d-0')
+        .append('button')
+        .attr('class', 'btn btn-outline-secondary btn-sm')
+        .html('Redraw');
+
+    // Draw heatmap
+    let heatMap = drawHeatmap(row_div.summary, data);
+
+    // Bind event to redraw button    
+    redraw_button.on('click', () => {
+        drawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
     })
 
     return heatMap;
 }
 
 
-function reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
+function drawHeatmap(summary_div, data) {
+        // Draw heatmap for the selected subset
+
+    // Clear dimension draw area if it already exists
+    // Set height for the dimension area to support overflow scroll
+    let draw_area = summary_div.append('div')
+        .attr('class', 'row m-3')
+        .style('height', 500 + 'px');
+
+    // width, height and padding for scatterplot svg
+    const width = draw_area.node().clientWidth - 100;
+    const height = draw_area.node().clientHeight - 100; 
+    const padding = 20;
+
+    let svg = draw_area.append('svg')
+                        .attr('width', width + 50)
+                        .attr('height', height + 50);
+    
+    let heatMap = new SepHeatmap(data, svg, width, height, padding);
+
+    return heatMap;
+}
+
+
+function drawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
     const request_data = {
         'request_identifier': heatmap.request_identifier,
         'dim_num': cur_dim_num,
@@ -272,8 +283,10 @@ function reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
     postJson('/heatmap_data', request_data).then(d => {
         data.heatmap_data = d.heatmap_data;
         
-        heatmap.reDraw(d.heatmap_data);
+        // Redraw heatmap
+        heatmap.draw(d.heatmap_data);
 
+        // Redraw detail area
         const plot_rows = createDetailRows(row_div, d.heatmap_data);
         drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
     })
@@ -341,8 +354,8 @@ function drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap) {
         drawStackedBars(instances, data, scp_data, scplot, stack_row);
 
         // Draw word clouds for one set of dimensions
-        // drawWordClouds(counter, data, wc_rows);
-        drawTextFingerprints(counter, data, wc_rows);
+        drawWordClouds(counter, data, wc_rows);
+        // drawTextFingerprints(counter, data, wc_rows);
 
         // Increment counter and do a recursive call
         counter++;

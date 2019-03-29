@@ -25,10 +25,10 @@ class SepHeatmap {
         this.svg.call(this.tip);
 
         // Draw
-        this.reDraw(this.data);
+        this.draw(this.data);
     }
 
-    reDraw(data) {
+    draw(data) {
         if (this.transform_group) this.transform_group.remove();
 
         // Set new data
