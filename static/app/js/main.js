@@ -25,16 +25,18 @@ const scplot_width = 300;
 const scplot_height = 240;
 const wcplot_width = 500;
 const wcplot_height = 500;
+const fingerprint_width = 300;
+const fingerprint_height = 300;
+
+const DEFAULT_DIM_NUM = 2, DEFAULT_INST_COUNT = 2;
+const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
+
 
 // Set height for the canvas area to support overflow scroll
 d3.select('#canvas')
     .style('height', window.innerHeight * 0.945 + 'px')
     .style('overflow-y', 'scroll');
 
-// Set height for the domain area to support overflow scroll
-// d3.select('#domain-area')
-//     .style('height', window.innerHeight * 0.9 + 'px')
-//     .style('overflow-y', 'scroll');
 
 // Set default values for model name, query method and query term
 let model_name = 'bert_mrpc';
@@ -96,30 +98,8 @@ d3.select('#query-button').on('click', () => {
         drawInfoArea(row.info, query_input, data);
         let heatmap = drawSummaryArea(row, data);
 
-        row.detail = row.canvas.append('div')
-            .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
-            // .style('width', `${contentDiv.node().clientWidth * 0.8}px`)
-            .style('height', `${row.canvas.node().clientHeight}px`)
-            .style('overflow', 'scroll');
-        
-        let scp_row = row.detail.append('div')
-            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('height', `${scplot_height}px`);
-        
-        let stack_row = row.detail.append('div')
-            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('height', `${scplot_height}px`);
-        
-        let wc_rows = [];
-        for (let w = 0; w < data.heatmap_data.dims.length; w++) {
-            const w_row = row.detail.append('div')
-                .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-                .style('width', `${wcplot_width * data.heatmap_data.insts[w].length + 100}px`)
-                .style('height', `${wcplot_height}px`);
-                wc_rows.push(w_row);
-        }
-    
-        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
+        const plot_rows = createDetailRows(row, data.heatmap_data);
+        drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
     })
 })
 
@@ -148,6 +128,36 @@ function createRow() {
     };
 }
 
+function createDetailRows(row_div, heatmap_data) {
+    // Redraw detail area
+    if (row_div.detail) row_div.detail.remove();
+    row_div.detail = row_div.canvas.append('div')
+        .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
+        .style('height', `${row_div.canvas.node().clientHeight}px`)
+        .style('overflow-y', 'scroll');
+
+    let scp_row = row_div.detail.append('div')
+        .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+        .style('width', `${scplot_width * heatmap_data.dims.length + 100}px`)
+        .style('height', `${scplot_height}px`);
+
+    let stack_row = row_div.detail.append('div')
+        .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+        .style('width', `${scplot_width * heatmap_data.dims.length + 100}px`)
+        .style('height', `${scplot_height}px`);
+
+    let wc_rows = [];
+    for (let w = 0; w < heatmap_data.dims.length; w++) {
+        const w_row = row_div.detail.append('div')
+            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
+            .style('width', `${wcplot_width * heatmap_data.insts[w].length + 100}px`)
+            .style('height', `${wcplot_height}px`);
+            wc_rows.push(w_row);
+    }
+
+    return [scp_row, stack_row, wc_rows];
+}
+
 function drawInfoArea(parentDiv, input, data) {
     // Create rows to display the query info
     parentDiv.append('div')
@@ -168,12 +178,10 @@ function drawInfoArea(parentDiv, input, data) {
 
     parentDiv.append('div')
         .attr('class', 'col ml-1 p-0 text-center')
-        .html(`Number of instances: <b>${data.vectors.length}</b>`);
+        .html(`Number of instances: <b>${data.num_of_inputs}</b>`);
 
 }
 
-const DEFAULT_DIM_NUM = 2, DEFAULT_INST_COUNT = 2;
-const MAX_DIM_NUM = 10, MAX_INST_NUM = 10;
 
 function drawSummaryArea(row_div, data) {
     // Set default values
@@ -217,11 +225,11 @@ function drawSummaryArea(row_div, data) {
     const height = heatmapDrawArea.node().clientHeight - 100; 
     const padding = 20;
 
-    let heatmapSvg = heatmapDrawArea.append('svg')
+    let svg = heatmapDrawArea.append('svg')
                         .attr('width', width + 50)
                         .attr('height', height + 50);
     
-    let heatMap = new SepHeatmap(data.heatmap_data, data.vectors, data.request_identifier, heatmapSvg, width, height, padding);
+    let heatMap = new SepHeatmap(data, svg, width, height, padding);
 
     // Bind event to dropdown menus
     dims_items.on('click', (d) => {
@@ -242,18 +250,19 @@ function drawSummaryArea(row_div, data) {
         let recreated_button = createMultipleDropdowns(insts_div, cur_dim_num, MAX_INST_NUM, DEFAULT_INST_COUNT, cur_insts_recorder, 'Reconfigure');
 
         recreated_button.on('click', () => {
-            redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
+            reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
         })
     });
 
     recfg_button.on('click', () => {
-        redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
+        reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatMap);
     })
 
     return heatMap;
 }
 
-function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
+
+function reDrawAll(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
     const request_data = {
         'request_identifier': heatmap.request_identifier,
         'dim_num': cur_dim_num,
@@ -261,45 +270,18 @@ function redraw(row_div, data, cur_dim_num, cur_insts_recorder, heatmap) {
     }
     
     postJson('/heatmap_data', request_data).then(d => {
-        heatmap.data = d.heatmap_data;
-        heatmap.reDraw();
-
-        // Redraw detail area
-        if (row_div.detail) row_div.detail.remove();
-        row_div.detail = row_div.canvas.append('div')
-            .attr('class', 'col ml-1 p-0 border-bottom border-secondary')
-            // .style('width', `${contentDiv.node().clientWidth * 0.8}px`)
-            .style('height', `${row_div.canvas.node().clientHeight}px`)
-            .style('overflow-y', 'scroll');
-        
-        let scp_row = row_div.detail.append('div')
-            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('width', `${scplot_width * d.heatmap_data.dims.length + 100}px`)
-            .style('height', `${scplot_height}px`);
-        
-        let stack_row = row_div.detail.append('div')
-            .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-            .style('width', `${scplot_width * d.heatmap_data.dims.length + 100}px`)
-            .style('height', `${scplot_height}px`);
-        
-        let wc_rows = [];
-        for (let w = 0; w < d.heatmap_data.dims.length; w++) {
-            const w_row = row_div.detail.append('div')
-                .attr('class', 'row ml-1 p-0 border-bottom border-secondary')
-                .style('width', `${wcplot_width * d.heatmap_data.insts[w].length + 100}px`)
-                .style('height', `${wcplot_height}px`);
-                wc_rows.push(w_row);
-        }
-
         data.heatmap_data = d.heatmap_data;
-        heatmap.scatterplots = [];
-        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
+        
+        heatmap.reDraw(d.heatmap_data);
+
+        const plot_rows = createDetailRows(row_div, d.heatmap_data);
+        drawDetailArea(plot_rows[0], plot_rows[1], plot_rows[2], data, heatmap);
     })
 }
 
 
 let counter = 0;
-function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
+function drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap) {
     let dims_data = data.heatmap_data.dims;
     let insts_data = data.heatmap_data.insts;
     if (counter == dims_data.length) {
@@ -307,26 +289,56 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
         return;
     }
 
-    // Request data
+    // Prepare data to be used in following plots
     const instances = insts_data[counter].map(d => d.instances);
+    let plot_data = [];
+    instances.forEach((inst_group, group_id) => {
+        inst_group.forEach((inst_id) => {
+            let td = {};
+            td.instance_id = inst_id;
+            td.input = data.inputs[inst_id];
+            td.group_id = group_id;
+
+            if (data.tag_type == 'no_tag') {
+                // pass;
+            } else if (data.tag_type == 'binary') {
+                const pred = data.predictions[inst_id];
+                const argmax = pred[0] > pred[1] ? 0 : 1;
+                const prob = argmax == 0 ? pred[argmax] : -pred[argmax];
+                td.prediction = {'class': argmax, 'prob': prob};
+            } else if (data.tag_type == 'multiclass') {
+                const pred = data.predictions[inst_id];
+                td.tag = pred;
+                td.prediction = data.tag_dict[pred];
+            }
+
+            plot_data.push(td);
+        })
+    })
+
+
+    // Request data
     const request_data = {
         'request_identifier': data.request_identifier,
-        'instances': instances,
-        'dimensions': dims_data[counter].dimensions,
-        'dm_method': dm_method
+        'dm_method': dm_method,
+        'dimensions': dims_data[counter].dimensions
     }
 
-    postJson('/dimension_reduction', request_data).then((scp_data) => {
-        console.log(scp_data);
+    postJson('/dimension_reduction', request_data).then((dm_data) => {
+        console.log(dm_data);
+
+        const scp_data = plot_data.map((d) => {
+            d['coords'] = dm_data.coords[d['instance_id']];
+            return d;
+        });
 
         // Draw scatterplots
-        const scplot = drawScplots(scp_data, scp_row, heatmap);
+        const scplot = drawScplots(data, scp_data, scp_row);
 
         heatmap.scatterplots.push(scplot);
 
         // Draw stacked bars
-        drawStackedBars(instances, scp_data, scplot, stack_row);
-
+        drawStackedBars(instances, data, scp_data, scplot, stack_row);
 
         // Draw word clouds for one set of dimensions
         // drawWordClouds(counter, data, wc_rows);
@@ -335,29 +347,30 @@ function drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap) {
         // Increment counter and do a recursive call
         counter++;
 
-        drawDetailRow(scp_row, stack_row, wc_rows, data, heatmap);
+        drawDetailArea(scp_row, stack_row, wc_rows, data, heatmap);
     })
 }
 
-function drawScplots(scp_data, scp_row) {
+
+function drawScplots(data, scp_data, row) {
     // Draw scatterplots
     const width = scplot_width, 
-          height = scp_row.node().clientHeight, 
+          height = scplot_height, 
           padding = 30;
 
-    let scp_svg = scp_row.append('svg')
+    let svg = row.append('svg')
         .attr('width', width)
         .attr('height', height)
         .attr('transform', `translate(${5}, ${0})`);
 
-    return new Scatterplot2D(scp_data.tag_type, scp_data.plot_data, scp_svg, width, height, padding);
+    return new Scatterplot2D(data.tag_type, scp_data, svg, width, height, padding);
 }
 
 
-function drawStackedBars(instances, scp_data, scplot, stack_row) {
+function drawStackedBars(instances, data, scp_data, scplot, row) {
     // Draw stacked bars
     // Process scp_data to be used for stacked bars
-    if (scp_data.tag_type == 'no_tag') return;
+    if (data.tag_type == 'no_tag') return;
 
     let cur_len = 0;
     let psum = [0];
@@ -373,20 +386,20 @@ function drawStackedBars(instances, scp_data, scplot, stack_row) {
         td.total = instances[gid].length;
         td.instances = instances[gid];
 
-        if (scp_data.tag_type == 'binary') {
+        if (data.tag_type == 'binary') {
             td['0'] = 0;
             td['1'] = 0;
-        } else if (scp_data.tag_type == 'multiclass') {
-            for (let tag in scp_data.tag_dict) {
+        } else if (data.tag_type == 'multiclass') {
+            for (let tag in data.tag_dict) {
                 td[tag] = 0;
             }
         }
 
         for (let si = psum[gid]; si < psum[gid+1]; si++) {
-            const d = scp_data.plot_data[si];
-            if (scp_data.tag_type == 'binary') {
-                td[d.prediction.class] += 1
-            } else if (scp_data.tag_type == 'multiclass') {
+            const d = scp_data[si];
+            if (data.tag_type == 'binary') {
+                td[d.prediction.class] += 1;
+            } else if (data.tag_type == 'multiclass') {
                 td[d.tag] += 1;
             }
         }
@@ -394,61 +407,61 @@ function drawStackedBars(instances, scp_data, scplot, stack_row) {
         stacked_data.push(td);
     }
 
-    const sw = scplot_width, 
-          sh = stack_row.node().clientHeight, 
-          spd = 20;
+    const width = scplot_width, 
+          height = scplot_height, 
+          padding = 20;
 
-    let stack_svg = stack_row.append('svg')
-        .attr('width', sw)
-        .attr('height', sh)
+    let svg = row.append('svg')
+        .attr('width', width)
+        .attr('height', height)
         .attr('transform', `translate(${5}, ${0})`);
     
-    let tag_keys = scp_data.tag_type == 'binary' ? [0, 1] : Object.keys(scp_data.tag_dict);
+    let tag_keys = data.tag_type == 'binary' ? [0, 1] : Object.keys(data.tag_dict);
 
     let has_legend = false;
     if (counter == 0) has_legend = true;
-    let stacked_chart = new StackedBarChart(stacked_data, tag_keys, stack_svg, sw, sh, spd, scplot, has_legend);
+    let stacked_chart = new StackedBarChart(stacked_data, tag_keys, svg, width, height, padding, scplot, has_legend);
 }
 
 
-function drawWordClouds(counter, data, wc_rows) {
+function drawWordClouds(counter, data, rows) {
     // Draw word clouds for one set of dimensions
-    const wc_row = wc_rows[counter];
-    const wc_width = wcplot_width, 
-          wc_height = wc_row.node().clientHeight, 
-          wc_padding = 20;
+    const row = rows[counter];
+    const width = wcplot_width, 
+          height = wcplot_height, 
+          padding = 20;
     const cur_insts = data.heatmap_data.insts[counter];
     for (let w = 0; w < cur_insts.length; w++) {
-        let wc_svg = wc_row.append('svg')
-            .attr('width', wc_width)
-            .attr('height', wc_height)
+        let svg = row.append('svg')
+            .attr('width', width)
+            .attr('height', height)
             .attr('transform', `translate(${5}, ${0})`);
 
         if (data.input_type == 'word') {
             const words = cur_insts[w].instances.map(idx => data.inputs[idx]);
-            let wc = new WordCloud(words, wc_svg, wc_width, wc_height, wc_padding);
+            let wc = new WordCloud(words, svg, width, height, padding);
         } else if (data.input_type == 'sentence') {
             const cleaned_sentences = cur_insts[w].instances.map(idx => data.cleaned_inputs[idx]);
-            let wc = new SentenceCloud(cleaned_sentences, wc_svg, wc_width, wc_height, wc_padding);
+            let wc = new SentenceCloud(cleaned_sentences, svg, width, height, padding);
         }
     }
 }
 
 
-function drawTextFingerprints(counter, data, wc_rows) {
-    const wc_row = wc_rows[counter];
-    const wc_width = wcplot_width, 
-          wc_height = wc_row.node().clientHeight, 
-          wc_padding = 10;
+function drawTextFingerprints(counter, data, rows) {
+    const row = rows[counter];
+    const width = fingerprint_width, 
+          height = fingerprint_height, 
+          padding = 20;
     
     const extent = [-1, d3.extent(data.inputs_length)[1]];
 
     const cur_insts = data.heatmap_data.insts[counter];
     for (let w = 0; w < cur_insts.length; w++) {
-        let wc_svg = wc_row.append('svg')
-            .attr('width', wc_width)
-            .attr('height', wc_height)
-            .attr('transform', `translate(${5}, ${0})`);
+        let svg = row.append('svg')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('transform', `translate(${5}, ${5})`);
 
         const stats = cur_insts[w].instances.map((idx) => {
             return {
@@ -457,6 +470,6 @@ function drawTextFingerprints(counter, data, wc_rows) {
             }
         });
 
-        let fingerprint = new TextFingerprint(stats, wc_svg, wc_width, wc_height, wc_padding, extent);
+        let fingerprint = new TextFingerprint(stats, svg, width, height, padding, extent);
     }
 }

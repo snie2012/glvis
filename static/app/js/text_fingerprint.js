@@ -13,12 +13,12 @@ class TextFingerprint {
         this.svg.call(tip);
 
         const num_per_row = 30;
-        const unit_length = width / num_per_row;
+        const unit_length = (width - padding) / num_per_row;
 
         const color_scale = d3.scaleSequential(d3.interpolatePurples).domain(extent);
 
         this.svg.append('g')
-            .attr('transform', `translate(${padding}, ${padding})`)
+            .attr('transform', `translate(${0}, ${0})`)
             .selectAll('rect')
             .data(data)
             .enter()

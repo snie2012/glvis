@@ -3,9 +3,9 @@ import d3_tip from "d3-tip";
 import * as _ from 'lodash';
 
 class SepHeatmap {
-    constructor(data, vectors, request_identifier, svg, width, height, padding) {
-        this.data = data;
-        this.request_identifier = request_identifier;
+    constructor(data, svg, width, height, padding) {
+        this.data = data.heatmap_data;
+        this.request_identifier = data.request_identifier;
         this.svg = svg;
 
         this.width = width;
@@ -17,19 +17,25 @@ class SepHeatmap {
         this.scatterplots = [];
 
         // Calculate unit length for row and column
-        this.unit_width = width / vectors[0].length;
-        this.unit_height = height / vectors.length;
+        this.unit_width = width / data.num_of_dims;
+        this.unit_height = height / data.num_of_inputs;
 
         const formatter = d3.format('.3f');
         this.tip = d3_tip().attr('class', 'd3-tip').html(d => d.mean ? formatter(d.mean) : formatter(d));
         this.svg.call(this.tip);
 
         // Draw
-        this.reDraw();
+        this.reDraw(this.data);
     }
 
-    reDraw() {
+    reDraw(data) {
         if (this.transform_group) this.transform_group.remove();
+
+        // Set new data
+        this.data = data;
+
+        // Clear scatterplots
+        this.scatterplots = [];
 
         // Calculate color scale
         let extents = [];

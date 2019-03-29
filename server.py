@@ -50,22 +50,14 @@ def fill_model_data(query_result, model_name, cluster_method):
     # Check whether the model's tag_type (prediction, binary, multiclass)
     model.tag_type = db_keys['tag_type']
     if model.tag_type == 'no_tag':
-        pass
+        model.preds = []
     elif model.tag_type == 'binary':
-        model.preds = np.array([item[db_keys['pred']] for item in query_result])
+        model.preds = [item[db_keys['pred']] for item in query_result]
     elif model.tag_type == 'multiclass':
-        model.preds = np.array([item[db_keys['pred']] for item in query_result])
+        model.preds = [item[db_keys['pred']] for item in query_result]
         model.tag_dict = db_keys['tag_dict']
     else:
         raise Exception()
-
-    # Calculate the statistics for each dimension
-    mean = np.mean(model.reps, axis=0)
-    std = np.std(model.reps, axis=0)
-    print(f'Stats shape. Mean: {mean.shape}, variance: {std.shape}')
-    model.stats = [
-        {'dim': i,'mean': val[0],'std': val[1]} for i, val in enumerate(zip(mean, std))
-    ]
 
     model.dim_groups, model.inst_groups = sep_clustering(model.reps, cluster_method)
 
@@ -77,51 +69,17 @@ def fill_model_data(query_result, model_name, cluster_method):
 def serve_dimension_reduction():
     response = request.json
 
-    dm_method = response['dm_method']
     model = data_dict[response['request_identifier']]
-
-    instances = response['instances']
-    inst_group_ids = []
-    instances_flatten = []
-    for i, g in enumerate(instances):
-        inst_group_ids += [i] * len(g)
-        instances_flatten += g
-
+    dm_method = response['dm_method']
     dimensions = response['dimensions']
-    reps = model.reps[instances_flatten, :][:, dimensions]
+    reps = model.reps[:, dimensions]
     
     print(f'Using: {dm_method}')
     print(f'Perform dimension reduction on shape: {reps.shape}')
     coords = reducers[dm_method].fit_transform(reps)
 
-    input_data = model.inputs[instances_flatten]
-
-    # Process prediction data if the model has prediction data
-    response_data = [
-        {'coords': coord, 'input': input_d, 'instance_id': inst, 'group_id': g_id} for coord, input_d, inst, g_id in zip(coords.tolist(), input_data, instances_flatten, inst_group_ids)
-    ]
-
-    if model.tag_type == 'no_tag':
-        pass
-    elif model.tag_type == 'binary':
-        predictions = model.preds[instances_flatten]
-        for i, elm in enumerate(predictions):
-            idx = np.argmax(elm)
-            prob = elm[idx] if idx == 0 else -elm[idx]
-            response_data[i]['prediction'] = {'class': int(idx),'prob': float(prob)}
-    elif model.tag_type == 'multiclass':
-        predictions = model.preds[instances_flatten]
-        tags = [model.tag_dict[tag] for tag in predictions]
-        for i in range(len(predictions)):
-            response_data[i]['prediction'] = tags[i]
-            response_data[i]['tag'] = predictions[i]
-    else:
-        raise Exception()
-
     return jsonify(
-        tag_dict=model.tag_dict if model.tag_type == 'multiclass' else 0,
-        tag_type=model.tag_type,
-        plot_data=response_data
+        coords=coords.tolist()
     )
 
 @app.route('/query_model_data', methods=['POST'])
@@ -155,12 +113,16 @@ def query_model_data():
 
     return jsonify(
         request_identifier=request_identifier,
+        num_of_inputs=model.reps.shape[0],
+        num_of_dims=model.reps.shape[1],
+        tag_dict=model.tag_dict if model.tag_type == 'multiclass' else 0,
+        tag_type=model.tag_type,
         input_type=model.input_type,
         inputs=model.inputs.tolist(),
         inputs_length=model.inputs_length,
         cleaned_inputs=model.cleaned_inputs if model.input_type == 'sentence' else 'no cleaned input',
-        vectors=model.reps.tolist(),
-        stats=model.stats,
+        # vectors=model.reps.tolist(),
+        predictions=model.preds,
         heatmap_data=model.heatmap_data
     )
 
