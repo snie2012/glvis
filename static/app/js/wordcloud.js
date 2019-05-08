@@ -5,7 +5,18 @@ class WordCloud {
     constructor(words, svg, width, height, padding) {
         this.svg = svg;
         this.padding = padding;
-        this.words = _.shuffle(words.map((d) => {return {'text': d, 'size': 15}}));
+        // this.words = _.shuffle(words);
+
+        const counter = _.countBy(words);
+        const size_data = Object.entries(counter).map(([k, v]) => {
+            return {'text': k, 'size': v};
+        });
+        const min = _.minBy(size_data, 'size')['size'];
+        const max = _.maxBy(size_data, 'size')['size'];
+        const scale = max - min;
+        this.words = size_data.map((elm) => {
+            return {'text': elm['text'], 'size': 10 + 30 * (elm['size'] - min) / scale};
+        });
 
         this.layout = d3_cloud()
             .size([width, height])
